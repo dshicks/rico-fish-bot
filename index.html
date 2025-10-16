@@ -13,6 +13,7 @@
     #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
     .user-msg { background: #d1e7ff; text-align: right; }
     .bot-msg { background: #e6f7ff; text-align: left; }
+    input, button { font-size: 1em; }
   </style>
 </head>
 <body>
@@ -35,6 +36,31 @@
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
 
+    // ✅ Replace with your OpenWeatherMap API key
+    const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
+
+    // ✅ Fetch real-time weather data for Rockport, TX
+    async function getWeatherData() {
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=Rockport,TX&appid=${WEATHER_API_KEY}&units=imperial`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      console.log("Weather API response:", data); // Debug in browser console
+
+      if (data.cod !== 200 || !data.main) {
+        return "Weather data unavailable.";
+      }
+
+      const temp = data.main.temp ?? "N/A";
+      const feelsLike = data.main.feels_like ?? "N/A";
+      const humidity = data.main.humidity ?? "N/A";
+      const windSpeed = data.wind.speed ?? "N/A";
+      const condition = data.weather[0]?.description ?? "N/A";
+
+      return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+    }
+
+    // ✅ Chat logic
     chatForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const message = userInput.value.trim();
@@ -42,13 +68,17 @@
 
       appendMessage("You", message, "user-msg");
       userInput.value = "";
-      appendMessage("Rico Fish Bot", "🎣 Thinking...", "bot-msg");
+      appendMessage("Rico Fish Bot", "🌤 Fetching weather data...", "bot-msg");
 
       try {
+        const weatherInfo = await getWeatherData();
+
+        appendMessage("Rico Fish Bot", "✅ Weather loaded. Thinking...", "bot-msg");
+
         const response = await fetch("http://localhost:3000/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
+          body: JSON.stringify({ message: `${message} (Weather: ${weatherInfo})` })
         });
 
         const data = await response.json();
@@ -77,7 +107,3 @@
   </script>
 </body>
 </html>
-
-
-
-
