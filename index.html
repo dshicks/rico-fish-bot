@@ -5,115 +5,133 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rico Fish Bot</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f8ff;
-      color: #333;
-    }
-    header {
-      background: url('sunrise-over-redfish-bay.jpg') center/cover no-repeat;
-      color: white;
-      padding: 80px 20px;
-      text-align: center;
-    }
-    header h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-    header p {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-    }
-    .cta-buttons button {
-      margin: 5px;
-      padding: 10px 20px;
-      font-size: 1em;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f8ff; margin: 0; color: #333; }
+    header { background: url('sunrise-over-redfish-bay.jpg') center/cover no-repeat; padding: 80px 20px; text-align: center; }
+    header h1 { font-size: 2.5em; margin-bottom: 10px; color: rgb(5, 5, 78); }
+    header p { font-size: 1.2em; margin-bottom: 20px; color: rgb(5, 5, 78); }
+    .cta-buttons button { margin: 5px; padding: 10px 20px; font-size: 1em; border: none; border-radius: 5px; cursor: pointer; }
     .start { background-color: #0078d4; color: white; }
-    .tip, .learn { background-color: white; color: #0078d4; border: 2px solid #0078d4; }
-
-    section {
-      padding: 40px 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-    .feature {
-      margin-bottom: 30px;
-    }
-    .chat-preview {
-      background: #e6f7ff;
-      padding: 20px;
-      border-radius: 10px;
-      font-family: monospace;
-    }
-    footer {
-      background: #0078d4;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-    footer a {
-      color: white;
-      margin: 0 10px;
-      text-decoration: none;
-    }
+    section { padding: 40px 20px; max-width: 800px; margin: auto; }
+    #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
+    .user-msg { background: #d1e7ff; text-align: right; }
+    .bot-msg { background: #e6f7ff; text-align: left; }
   </style>
 </head>
 <body>
-
   <header>
     <h1>Rico Fish Bot</h1>
     <p>Your AI Fishing Guide for the Texas Coast</p>
     <div class="cta-buttons">
       <button class="start">Start Chatting</button>
-      <button class="tip">Submit a Tip</button>
-      <button class="learn">Learn More</button>
     </div>
   </header>
 
   <section>
-    <h2>How It Works</h2>
-    <div class="feature">🗺️ <strong>Pick Your Launch Point</strong> – Rockport, Port O’Connor, Baffin Bay…</div>
-    <div class="feature">🕕 <strong>Set Your Time</strong> – Morning, afternoon, or future trip planning</div>
-    <div class="feature">🎯 <strong>Choose Your Target</strong> – Redfish, trout, drum—or ask what’s biting</div>
+    <h2>🎣 Chat with Rico Fish Bot</h2>
+    <div id="chat-box" style="background:#f9f9f9; border:1px solid #ccc; padding:15px; border-radius:10px; max-height:300px; overflow-y:auto;"></div>
+    <form id="chat-form" style="margin-top:10px;">
+      <input type="text" id="user-input" placeholder="Ask Rico where to fish..." style="width:75%; padding:10px;" />
+      <button type="submit" style="padding:10px;">Send</button>
+    </form>
   </section>
 
-  <section>
-    <h2>Chat Preview</h2>
-    <div class="chat-preview">
-      <p><strong>User:</strong> Where are the bull reds biting near Rockport tomorrow at 6AM?</p>
-      <p><strong>Rico Fish Bot:</strong> Back lakes east of Estes Flats—Dagger Island and California Hole. Rising tide, cut mullet.</p>
-    </div>
-    <button class="start">Try a Demo Chat</button>
-  </section>
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
 
-  <section>
-    <h2>Powered by Local Wisdom</h2>
-    <div class="feature">📜 <strong>Guide Reports</strong> – Real-time updates from trusted captains</div>
-    <div class="feature">🧑‍🤝‍🧑 <strong>Community Tips</strong> – Submit your own tactics to train Rico smarter</div>
-  </section>
+    // API Keys (⚠️ For demo only! Use backend proxy in production)
+    const OPENAI_API_KEY = "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";
+    const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
 
-  <section>
-    <h2>Coming Soon</h2>
-    <div class="feature">🗺️ Rico Radar: Best zones by time of day</div>
-    <div class="feature">🧰 Rig Builder: Match bait to conditions</div>
-    <div class="feature">📍 Catch Logs: Track and share your wins</div>
-    <div class="feature">🧑‍🏫 Training Prompts: Help Rico learn your waters</div>
-  </section>
+    const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
-  <footer>
-    <p>Built by anglers. Trained by Texas.</p>
-    <p>
-      <a href="#">About</a> |
-      <a href="#">Contact</a> |
-      <a href="#">Submit Tip</a> |
-      <a href="#">Privacy</a>
-    </p>
-  </footer>
+    chatForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      if (!message) return;
 
+      appendMessage("You", message, "user-msg");
+      userInput.value = "";
+      appendMessage("Rico Fish Bot", "🌤 Fetching weather data...", "bot-msg");
+
+      try {
+        const weatherInfo = await getWeatherData();
+
+        appendMessage("Rico Fish Bot", "✅ Weather loaded. Thinking...", "bot-msg");
+
+        const response = await fetch(OPENAI_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: `You are Rico Fish Bot, a Texas coastal fishing guide. Use this real-time weather data:
+                ${weatherInfo}
+                Give practical, local fishing advice based on these conditions. Suggest bait, timing, and spots.`
+              },
+              { role: "user", content: message }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        const data = await response.json();
+        const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from ChatGPT.";
+        updateLastBotMessage(reply);
+      } catch (error) {
+        console.error(error);
+        updateLastBotMessage("⚠️ Error fetching weather or calling ChatGPT API.");
+      }
+    });
+
+
+    async function getWeatherData() {
+      const url = 'http://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=1e24ea016ffb7aaf0846b9dd682a2698&units=imperial';
+      const res = await fetch(url);
+      const data = await res.json();
+
+      // ✅ Debug tip: log full response
+      console.log("Weather API response:", data);
+
+      // Validate response
+      if (data.cod !== 200 || !data.main || !data.weather || !data.wind) {
+        return "Weather data unavailable.";
+      }
+
+      // Extract values safely
+      const temp = data.main.temp ?? "N/A";
+      const feelsLike = data.main.feels_like ?? "N/A";
+      const humidity = data.main.humidity ?? "N/A";
+      const windSpeed = data.wind.speed ?? "N/A";
+      const condition = data.weather[0]?.description ?? "N/A";
+
+      // Return formatted string
+      return `Temp: ${data.main.temp}°F`
+      //return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+    }
+
+
+
+    function appendMessage(sender, text, className) {
+      const msg = document.createElement('p');
+      msg.className = className;
+      msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function updateLastBotMessage(text) {
+      const botMessages = chatBox.querySelectorAll("p.bot-msg");
+      if (botMessages.length > 0) {
+        botMessages[botMessages.length - 1].innerHTML = `<strong>Rico Fish Bot:</strong> ${text}`;
+      }
+    }
+  </script>
 </body>
 </html>
