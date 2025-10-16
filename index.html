@@ -75,11 +75,13 @@
 
         appendMessage("Rico Fish Bot", "✅ Weather loaded. Thinking...", "bot-msg");
 
-        const response = await fetch("http://localhost:3000/api/chat", {
+
+        const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: `${message} (Weather: ${weatherInfo})` })
         });
+
 
         const data = await response.json();
         const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
@@ -107,4 +109,5 @@
   </script>
 </body>
 </html>
+
 
