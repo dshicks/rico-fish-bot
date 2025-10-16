@@ -8,6 +8,10 @@ const app = express();
 app.use(express.json());
 app.use(cors()); // Allow front-end requests
 
+app.get("/", (req, res) => {
+  res.send("✅ Backend is running");
+});
+
 app.post("/api/chat", async (req, res) => {
   const userMessage = req.body.message;
 
