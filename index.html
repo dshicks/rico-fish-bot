@@ -52,12 +52,13 @@
       }
 
       const temp = data.main.temp ?? "N/A";
-      const feelsLike = data.main.feels_like ?? "N/A";
-      const humidity = data.main.humidity ?? "N/A";
-      const windSpeed = data.wind.speed ?? "N/A";
-      const condition = data.weather[0]?.description ?? "N/A";
+//      const feelsLike = data.main.feels_like ?? "N/A";
+//      const humidity = data.main.humidity ?? "N/A";
+//      const windSpeed = data.wind.speed ?? "N/A";
+//      const condition = data.weather[0]?.description ?? "N/A";
 
-      return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+     // return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+        return `Temp: ${temp}°F
     }
 
     // ✅ Chat logic
@@ -107,3 +108,4 @@
   </script>
 </body>
 </html>
+
