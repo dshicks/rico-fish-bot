@@ -1,119 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Rico Fish Bot — Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f8fafc;
-      color: #111827;
-      margin: 0;
-      padding: 0;
-    }
-    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
-    .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-    }
-    .btn {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      background: #fff;
-      color: #000; /* force black text */
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-    .muted { color: #6b7280; font-size: 0.9rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Rico Fish Bot</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color:#222; }
+  h1 { margin-bottom: 20px; }
+  section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  textarea { width: 100%; height: 100px; margin-bottom: 10px; font-family: inherit; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+  select, button, input { padding: 10px; margin-top: 10px; }
+  #status { font-weight: bold; color: green; margin-bottom: 10px; }
+  .muted { color:#777; }
+  .danger { background:#b00020; color:white; border:none; }
+  .btn { cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#fafafa; }
+  .btn:active { transform: translateY(1px); }
+  .loading { color:#555; font-style:italic; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Rico Fish Bot — Admin</h1>
-      <p class="muted">Manage prompts, tone, and history</p>
-    </header>
+<h1>Admin Panel</h1>
 
-    <!-- Existing admin controls -->
-    <div class="card">
-      <label for="sentiment">Sentiment (Tone)</label>
-      <select id="sentiment">
-        <option value="friendly">Friendly</option>
-        <option value="professional">Professional</option>
-        <option value="playful">Playful</option>
-        <option value="concise">Concise</option>
-        <option value="expert">Expert</option>
-      </select>
-      <div class="btn-row">
-        <button id="save-sentiment-btn" class="btn">Save Sentiment</button>
-      </div>
-      <p id="sentiment-msg" class="muted"></p>
+<!-- Login Section -->
+<section id="login-section">
+  <h2>Login</h2>
+  <input type="password" id="admin-password" placeholder="Enter password">
+  <button class="btn" onclick="login()">Login</button>
+</section>
+
+<!-- Admin Content -->
+<div id="admin-content" style="display:none;">
+  <div id="status">✅ Logged in</div>
+  <button class="btn" onclick="logout()">Logout</button>
+
+  <!-- Train Model -->
+  <section>
+    <h2>Train Model</h2>
+    <textarea id="prompt-input" placeholder="Enter training prompt..."></textarea>
+    <button class="btn" onclick="submitPrompt()">Submit Prompt</button>
+    <div id="prompt-history"></div>
+  </section>
+
+  <!-- Sentiment -->
+  <section>
+    <h2>Set Response Sentiment</h2>
+    <select id="sentiment-select">
+      <option value="friendly">Friendly</option>
+      <option value="fish-or-die">Fish or Die</option>
+      <option value="professional">Professional</option>
+    </select>
+    <button class="btn" onclick="updateSentiment()">Update Sentiment</button>
+  </section>
+
+  <!-- Prompts.json Viewer -->
+  <section>
+    <h2>Saved Prompts (prompts.json)</h2>
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+      <button id="reload-prompts-json-btn" class="btn">Refresh Prompts</button>
+      <label style="display:flex; align-items:center; gap:6px; font-size: 0.95em;">
+        <input type="checkbox" id="prompts-json-table-toggle" />
+        Show as table
+      </label>
+      <span id="prompts-json-status" class="muted"></span>
     </div>
 
-    <div class="card">
-      <label for="new-prompt">Add Training Prompt</label>
-      <textarea id="new-prompt" placeholder="Enter a prompt..."></textarea>
-      <div class="btn-row">
-        <button id="add-prompt-btn" class="btn">Submit Prompt</button>
-        <button id="clear-prompts-btn" class="btn">Clear All Prompts</button>
-      </div>
-      <p id="prompts-msg" class="muted"></p>
+    <!-- Table view -->
+    <div id="prompts-json-table-wrapper" style="display:none; overflow:auto; max-height:300px; border:1px solid #eee; border-radius:6px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Text</th><th>Created</th><th>ID</th><th>Has Embedding</th>
+          </tr>
+        </thead>
+        <tbody id="prompts-json-table-body"></tbody>
+      </table>
     </div>
 
-    <div class="card">
-      <label>Current Prompts</label>
-      <div id="prompts-list" class="muted">Loading...</div>
+    <!-- Raw JSON pretty print -->
+    <pre id="prompts-json-pre" style="margin-top:12px; background:#fff; border:1px solid #eee; border-radius:6px; padding:12px; overflow:auto; max-height:300px;"></pre>
+
+    <!-- Clear -->
+    <div style="margin-top:10px;">
+      <button id="clear-prompts-btn" class="danger btn">Clear All Prompts</button>
+      <small class="muted" style="margin-left:8px;">This wipes prompts.json</small>
     </div>
+  </section>
 
-    <!-- ✅ NEW: Clear Server Chat History -->
-    <div class="card">
-      <label>Clear Chat History (Server)</label>
-      <p class="muted">This clears all chat history stored in <code>HISTORY_FILE</code> on the server.</p>
-      <div class="btn-row">
-        <button id="clear-chat-server-btn" class="btn">Clear Server Chat History</button>
-      </div>
-      <p id="chat-clear-server-msg" class="muted"></p>
-    </div>
-  </div>
+  <!-- User Chat History -->
+  <section>
+    <h2>User Chat History</h2>
+    <table>
+      <thead><tr><th>User</th><th>Message</th><th>Bot Response</th><th>Time</th></tr></thead>
+      <tbody id="chat-history"></tbody>
+    </table>
+  </section>
+</div>
 
-  <script>
-    const API_BASE = window.location.origin;
+<script>
+const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
+let token = '';
 
-    // --- Clear Server Chat History ---
-    const clearChatServerBtn = document.getElementById('clear-chat-server-btn');
-    const chatClearServerMsg = document.getElementById('chat-clear-server-msg');
+window.onload = () => {
+  const savedToken = localStorage.getItem('adminToken');
+  if (savedToken) {
+    token = savedToken;
+    showAdminContent();
+    loadPromptHistory();
+    loadChatHistory();
+    loadPromptsJson();
+  }
+};
 
-    async function fetchJSON(path, options = {}) {
-      const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
-      const res = await fetch(path, { ...options, headers });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-      }
-      return res.json();
+async function login() {
+  const password = document.getElementById('admin-password').value;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      token = data.token;
+      localStorage.setItem('adminToken', token);
+      showAdminContent();
+      loadPromptHistory();
+      loadChatHistory();
+      loadPromptsJson();
+    } else {
+      alert('Invalid password');
+    }
+  } catch (err) {
+    alert('Error connecting to backend');
+    console.error(err);
+  }
+}
+
+function showAdminContent() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
+}
+
+function logout() {
+  localStorage.removeItem('adminToken');
+  token = '';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('login-section').style.display = 'block';
+}
+
+async function submitPrompt() {
+  const prompt = document.getElementById('prompt-input').value.trim();
+  if (!prompt) return alert('Enter a prompt!');
+  try {
+    await fetch(`${BASE_URL}/api/admin/train`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ prompt })
+    });
+    document.getElementById('prompt-input').value = '';
+    loadPromptHistory();
+    loadPromptsJson();
+  } catch (e) {
+    console.error(e);
+    alert('Failed to submit prompt.');
+  }
+}
+
+async function updateSentiment() {
+  const sentiment = document.getElementById('sentiment-select').value;
+  try {
+    await fetch(`${BASE_URL}/api/admin/sentiment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ sentiment })
+    });
+    alert('Sentiment updated!');
+  } catch (e) {
+    console.error(e);
+    alert('Failed to update sentiment.');
+  }
+}
+
+async function loadPromptHistory() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
+    if (res.status === 403) return handleUnauthorized();
+    const prompts = await res.json();
+    document.getElementById('prompt-history').innerHTML =
+      '<h3>Prompt History</h3>' + prompts.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  } catch (e) {
+    console.error(e);
+    document.getElementById('prompt-history').innerHTML = '<p class="muted">Failed to load prompt history.</p>';
+  }
+}
+
+async function loadChatHistory() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/history`, { headers: { 'Authorization': token } });
+    if (res.status === 403) return handleUnauthorized();
+    const chats = await res.json();
+    const rows = chats.map(c => `
+      <tr>
+        <td>${escapeHtml(c.user)}</td>
+        <td>${escapeHtml(c.message)}</td>
+        <td>${escapeHtml(c.bot)}</td>
+        <td>${escapeHtml(c.time)}</td>
+      </tr>`).join('');
+    document.getElementById('chat-history').innerHTML = rows;
+  } catch (e) {
+    console.error(e);
+    document.getElementById('chat-history').innerHTML = '<tr><td colspan="4" class="muted">Failed to load chat history.</td></tr>';
+  }
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+/* ===== Prompts.json Viewer ===== */
+const promptsJsonPre = document.getElementById('prompts-json-pre');
+const promptsJsonStatus = document.getElementById('prompts-json-status');
+const promptsJsonReloadBtn = document.getElementById('reload-prompts-json-btn');
+const promptsJsonTableToggle = document.getElementById('prompts-json-table-toggle');
+const promptsJsonTableWrapper = document.getElementById('prompts-json-table-wrapper');
+const promptsJsonTableBody = document.getElementById('prompts-json-table-body');
+const clearPromptsBtn = document.getElementById('clear-prompts-btn');
+
+async function loadPromptsJson() {
+  if (!token) return;
+  promptsJsonStatus.textContent = 'Loading...';
+  promptsJsonPre.textContent = '';
+  promptsJsonTableBody.innerHTML = '';
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, {
+      headers: { 'Authorization': token }
+    });
+    if (res.status === 403) return handleUnauthorized();
+    const data = await res.json();
+
+    promptsJsonPre.textContent = JSON.stringify(data, null, 2);
+
+    if (Array.isArray(data) && promptsJsonTableToggle.checked) {
+      data.forEach((item, idx) => {
+        const hasEmbedding = item && item.embedding && Array.isArray(item.embedding) && item.embedding.length > 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(item.text || '')}</td>
+          <td>${escapeHtml(item.createdAt || '')}</td>
+          <td>${escapeHtml(item.id || '')}</td>
+          <td>${hasEmbedding ? 'Yes' : 'No'}</td>
+        `;
+        promptsJsonTableBody.appendChild(tr);
+      });
     }
 
-    clearChatServerBtn?.addEventListener('click', async () => {
-      if (!confirm('Clear ALL chat history on the server? This cannot be undone.')) return;
-      clearChatServerBtn.disabled = true;
-      chatClearServerMsg.textContent = 'Clearing...';
-      try {
-        await fetchJSON(`${API_BASE}/api/history/clear`, { method: 'POST' });
-        chatClearServerMsg.textContent = 'Server chat history cleared.';
-      } catch (e) {
-        chatClearServerMsg.textContent = `Failed: ${e.message}`;
-        console.error(e);
-      } finally {
-        clearChatServerBtn.disabled = false;
-      }
+    const count = Array.isArray(data) ? data.length : (data ? 1 : 0);
+    promptsJsonStatus.textContent = `Loaded ${count} record(s)`;
+  } catch (err) {
+    console.error('Failed to load prompts.json:', err);
+    promptsJsonStatus.textContent = 'Error loading prompts';
+    promptsJsonPre.textContent = `Error: ${err.message}`;
+  }
+}
+
+function handleUnauthorized() {
+  alert('Session expired. Please log in again.');
+  logout();
+}
+
+// UI wiring
+promptsJsonReloadBtn.addEventListener('click', loadPromptsJson);
+promptsJsonTableToggle.addEventListener('change', () => {
+  promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
+  loadPromptsJson();
+});
+clearPromptsBtn.addEventListener('click', async () => {
+  if (!confirm('This will wipe all saved prompts. Continue?')) return;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
+      method: 'POST',
+      headers: { 'Authorization': token }
     });
-  </script>
+    if (res.status === 403) return handleUnauthorized();
+    await loadPromptsJson();
+    await loadPromptHistory();
+    alert('Prompts cleared.');
+  } catch (e) {
+    console.error(e);
+    alert('Failed to clear prompts.');
+  }
+});
+</script>
 </body>
 </html>
