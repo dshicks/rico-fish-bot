@@ -17,6 +17,7 @@
   .danger { background:#b00020; color:white; border:none; }
   .btn { cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#fafafa; }
   .btn:active { transform: translateY(1px); }
+  .loading { color:#555; font-style:italic; }
 </style>
 </head>
 <body>
@@ -56,7 +57,6 @@
   <!-- Prompts.json Viewer -->
   <section>
     <h2>Saved Prompts (prompts.json)</h2>
-
     <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
       <button id="reload-prompts-json-btn" class="btn">Refresh Prompts</button>
       <label style="display:flex; align-items:center; gap:6px; font-size: 0.95em;">
@@ -71,11 +71,7 @@
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Text</th>
-            <th>Created</th>
-            <th>ID</th>
-            <th>Has Embedding</th>
+            <th>#</th><th>Text</th><th>Created</th><th>ID</th><th>Has Embedding</th>
           </tr>
         </thead>
         <tbody id="prompts-json-table-body"></tbody>
@@ -85,7 +81,7 @@
     <!-- Raw JSON pretty print -->
     <pre id="prompts-json-pre" style="margin-top:12px; background:#fff; border:1px solid #eee; border-radius:6px; padding:12px; overflow:auto; max-height:300px;"></pre>
 
-    <!-- (Optional) Clear -->
+    <!-- Clear -->
     <div style="margin-top:10px;">
       <button id="clear-prompts-btn" class="danger btn">Clear All Prompts</button>
       <small class="muted" style="margin-left:8px;">This wipes prompts.json</small>
@@ -106,7 +102,6 @@
 const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
 let token = '';
 
-// ✅ Restore session on page load
 window.onload = () => {
   const savedToken = localStorage.getItem('adminToken');
   if (savedToken) {
@@ -114,7 +109,7 @@ window.onload = () => {
     showAdminContent();
     loadPromptHistory();
     loadChatHistory();
-    loadPromptsJson(); // load viewer on restore
+    loadPromptsJson();
   }
 };
 
@@ -166,7 +161,7 @@ async function submitPrompt() {
     });
     document.getElementById('prompt-input').value = '';
     loadPromptHistory();
-    loadPromptsJson(); // refresh viewer after adding
+    loadPromptsJson();
   } catch (e) {
     console.error(e);
     alert('Failed to submit prompt.');
@@ -191,6 +186,7 @@ async function updateSentiment() {
 async function loadPromptHistory() {
   try {
     const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
+    if (res.status === 403) return handleUnauthorized();
     const prompts = await res.json();
     document.getElementById('prompt-history').innerHTML =
       '<h3>Prompt History</h3>' + prompts.map(p => `<p>${escapeHtml(p)}</p>`).join('');
@@ -203,6 +199,7 @@ async function loadPromptHistory() {
 async function loadChatHistory() {
   try {
     const res = await fetch(`${BASE_URL}/api/admin/history`, { headers: { 'Authorization': token } });
+    if (res.status === 403) return handleUnauthorized();
     const chats = await res.json();
     const rows = chats.map(c => `
       <tr>
@@ -218,15 +215,6 @@ async function loadChatHistory() {
   }
 }
 
-/* ===== Prompts.json Viewer ===== */
-const promptsJsonPre = document.getElementById('prompts-json-pre');
-const promptsJsonStatus = document.getElementById('prompts-json-status');
-const promptsJsonReloadBtn = document.getElementById('reload-prompts-json-btn');
-const promptsJsonTableToggle = document.getElementById('prompts-json-table-toggle');
-const promptsJsonTableWrapper = document.getElementById('prompts-json-table-wrapper');
-const promptsJsonTableBody = document.getElementById('prompts-json-table-body');
-const clearPromptsBtn = document.getElementById('clear-prompts-btn');
-
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -236,6 +224,15 @@ function escapeHtml(str) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 }
+
+/* ===== Prompts.json Viewer ===== */
+const promptsJsonPre = document.getElementById('prompts-json-pre');
+const promptsJsonStatus = document.getElementById('prompts-json-status');
+const promptsJsonReloadBtn = document.getElementById('reload-prompts-json-btn');
+const promptsJsonTableToggle = document.getElementById('prompts-json-table-toggle');
+const promptsJsonTableWrapper = document.getElementById('prompts-json-table-wrapper');
+const promptsJsonTableBody = document.getElementById('prompts-json-table-body');
+const clearPromptsBtn = document.getElementById('clear-prompts-btn');
 
 async function loadPromptsJson() {
   if (!token) return;
@@ -247,28 +244,21 @@ async function loadPromptsJson() {
     const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, {
       headers: { 'Authorization': token }
     });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Server responded ${res.status}: ${txt}`);
-    }
-
+    if (res.status === 403) return handleUnauthorized();
     const data = await res.json();
 
-    // Pretty print raw JSON
     promptsJsonPre.textContent = JSON.stringify(data, null, 2);
 
-    // Render table if toggled and data is an array
     if (Array.isArray(data) && promptsJsonTableToggle.checked) {
       data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
         const hasEmbedding = item && item.embedding && Array.isArray(item.embedding) && item.embedding.length > 0;
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${idx + 1}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px; white-space:pre-wrap;">${escapeHtml(item.text || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.createdAt || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.id || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${hasEmbedding ? 'Yes' : 'No'}</td>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(item.text || '')}</td>
+          <td>${escapeHtml(item.createdAt || '')}</td>
+          <td>${escapeHtml(item.id || '')}</td>
+          <td>${hasEmbedding ? 'Yes' : 'No'}</td>
         `;
         promptsJsonTableBody.appendChild(tr);
       });
@@ -283,40 +273,33 @@ async function loadPromptsJson() {
   }
 }
 
+function handleUnauthorized() {
+  alert('Session expired. Please log in again.');
+  logout();
+}
+
 // UI wiring
-if (promptsJsonReloadBtn) {
-  promptsJsonReloadBtn.addEventListener('click', () => {
-    loadPromptsJson();
-  });
-}
-if (promptsJsonTableToggle) {
-  promptsJsonTableToggle.addEventListener('change', () => {
-    // Toggle table visibility and re-render to fill the rows
-    promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
-    loadPromptsJson();
-  });
-}
-if (clearPromptsBtn) {
-  clearPromptsBtn.addEventListener('click', async () => {
-    if (!confirm('This will wipe all saved prompts. Continue?')) return;
-    try {
-      const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
-        method: 'POST',
-        headers: { 'Authorization': token }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Server responded ${res.status}: ${txt}`);
-      }
-      await loadPromptsJson();
-      await loadPromptHistory(); // keep legacy view in sync
-      alert('Prompts cleared.');
-    } catch (e) {
-      console.error(e);
-      alert('Failed to clear prompts.');
-    }
-  });
-}
+promptsJsonReloadBtn.addEventListener('click', loadPromptsJson);
+promptsJsonTableToggle.addEventListener('change', () => {
+  promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
+  loadPromptsJson();
+});
+clearPromptsBtn.addEventListener('click', async () => {
+  if (!confirm('This will wipe all saved prompts. Continue?')) return;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
+      method: 'POST',
+      headers: { 'Authorization': token }
+    });
+    if (res.status === 403) return handleUnauthorized();
+    await loadPromptsJson();
+    await loadPromptHistory();
+    alert('Prompts cleared.');
+  } catch (e) {
+    console.error(e);
+    alert('Failed to clear prompts.');
+  }
+});
 </script>
 </body>
 </html>
