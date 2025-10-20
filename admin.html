@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel - Rico Fish Bot</title>
 <style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color:#222; }
   h1 { margin-bottom: 20px; }
-  section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-  textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+  section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  textarea { width: 100%; height: 100px; margin-bottom: 10px; font-family: inherit; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 8px; border-bottom: 1px solid #ddd; }
+  th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
   select, button, input { padding: 10px; margin-top: 10px; }
   #status { font-weight: bold; color: green; margin-bottom: 10px; }
+  .muted { color:#777; }
+  .danger { background:#b00020; color:white; border:none; }
+  .btn { cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#fafafa; }
+  .btn:active { transform: translateY(1px); }
 </style>
 </head>
 <body>
@@ -22,19 +26,19 @@
 <section id="login-section">
   <h2>Login</h2>
   <input type="password" id="admin-password" placeholder="Enter password">
-  <button onclick="login()">Login</button>
+  <button class="btn" onclick="login()">Login</button>
 </section>
 
 <!-- Admin Content -->
 <div id="admin-content" style="display:none;">
   <div id="status">✅ Logged in</div>
-  <button onclick="logout()">Logout</button>
+  <button class="btn" onclick="logout()">Logout</button>
 
   <!-- Train Model -->
   <section>
     <h2>Train Model</h2>
     <textarea id="prompt-input" placeholder="Enter training prompt..."></textarea>
-    <button onclick="submitPrompt()">Submit Prompt</button>
+    <button class="btn" onclick="submitPrompt()">Submit Prompt</button>
     <div id="prompt-history"></div>
   </section>
 
@@ -46,10 +50,49 @@
       <option value="fish-or-die">Fish or Die</option>
       <option value="professional">Professional</option>
     </select>
-    <button onclick="updateSentiment()">Update Sentiment</button>
+    <button class="btn" onclick="updateSentiment()">Update Sentiment</button>
   </section>
 
-  <!-- Chat History -->
+  <!-- Prompts.json Viewer -->
+  <section>
+    <h2>Saved Prompts (prompts.json)</h2>
+
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
+      <button id="reload-prompts-json-btn" class="btn">Refresh Prompts</button>
+      <label style="display:flex; align-items:center; gap:6px; font-size: 0.95em;">
+        <input type="checkbox" id="prompts-json-table-toggle" />
+        Show as table
+      </label>
+      <span id="prompts-json-status" class="muted"></span>
+    </div>
+
+    <!-- Table view -->
+    <div id="prompts-json-table-wrapper" style="display:none; overflow:auto; max-height:300px; border:1px solid #eee; border-radius:6px;">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Text</th>
+            <th>Created</th>
+            <th>ID</th>
+            <th>Has Embedding</th>
+          </tr>
+        </thead>
+        <tbody id="prompts-json-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Raw JSON pretty print -->
+    <pre id="prompts-json-pre" style="margin-top:12px; background:#fff; border:1px solid #eee; border-radius:6px; padding:12px; overflow:auto; max-height:300px;"></pre>
+
+    <!-- (Optional) Clear -->
+    <div style="margin-top:10px;">
+      <button id="clear-prompts-btn" class="danger btn">Clear All Prompts</button>
+      <small class="muted" style="margin-left:8px;">This wipes prompts.json</small>
+    </div>
+  </section>
+
+  <!-- User Chat History -->
   <section>
     <h2>User Chat History</h2>
     <table>
@@ -71,6 +114,7 @@ window.onload = () => {
     showAdminContent();
     loadPromptHistory();
     loadChatHistory();
+    loadPromptsJson(); // load viewer on restore
   }
 };
 
@@ -89,6 +133,7 @@ async function login() {
       showAdminContent();
       loadPromptHistory();
       loadChatHistory();
+      loadPromptsJson();
     } else {
       alert('Invalid password');
     }
@@ -113,36 +158,164 @@ function logout() {
 async function submitPrompt() {
   const prompt = document.getElementById('prompt-input').value.trim();
   if (!prompt) return alert('Enter a prompt!');
-  await fetch(`${BASE_URL}/api/admin/train`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': token },
-    body: JSON.stringify({ prompt })
-  });
-  document.getElementById('prompt-input').value = '';
-  loadPromptHistory();
+  try {
+    await fetch(`${BASE_URL}/api/admin/train`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ prompt })
+    });
+    document.getElementById('prompt-input').value = '';
+    loadPromptHistory();
+    loadPromptsJson(); // refresh viewer after adding
+  } catch (e) {
+    console.error(e);
+    alert('Failed to submit prompt.');
+  }
 }
 
 async function updateSentiment() {
   const sentiment = document.getElementById('sentiment-select').value;
-  await fetch(`${BASE_URL}/api/admin/sentiment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': token },
-    body: JSON.stringify({ sentiment })
-  });
-  alert('Sentiment updated!');
+  try {
+    await fetch(`${BASE_URL}/api/admin/sentiment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ sentiment })
+    });
+    alert('Sentiment updated!');
+  } catch (e) {
+    console.error(e);
+    alert('Failed to update sentiment.');
+  }
 }
 
 async function loadPromptHistory() {
-  const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
-  const prompts = await res.json();
-  document.getElementById('prompt-history').innerHTML = '<h3>Prompt History</h3>' + prompts.map(p => `<p>${p}</p>`).join('');
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
+    const prompts = await res.json();
+    document.getElementById('prompt-history').innerHTML =
+      '<h3>Prompt History</h3>' + prompts.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  } catch (e) {
+    console.error(e);
+    document.getElementById('prompt-history').innerHTML = '<p class="muted">Failed to load prompt history.</p>';
+  }
 }
 
 async function loadChatHistory() {
-  const res = await fetch(`${BASE_URL}/api/admin/history`, { headers: { 'Authorization': token } });
-  const chats = await res.json();
-  const rows = chats.map(c => `<tr><td>${c.user}</td><td>${c.message}</td><td>${c.bot}</td><td>${c.time}</td></tr>`).join('');
-  document.getElementById('chat-history').innerHTML = rows;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/history`, { headers: { 'Authorization': token } });
+    const chats = await res.json();
+    const rows = chats.map(c => `
+      <tr>
+        <td>${escapeHtml(c.user)}</td>
+        <td>${escapeHtml(c.message)}</td>
+        <td>${escapeHtml(c.bot)}</td>
+        <td>${escapeHtml(c.time)}</td>
+      </tr>`).join('');
+    document.getElementById('chat-history').innerHTML = rows;
+  } catch (e) {
+    console.error(e);
+    document.getElementById('chat-history').innerHTML = '<tr><td colspan="4" class="muted">Failed to load chat history.</td></tr>';
+  }
+}
+
+/* ===== Prompts.json Viewer ===== */
+const promptsJsonPre = document.getElementById('prompts-json-pre');
+const promptsJsonStatus = document.getElementById('prompts-json-status');
+const promptsJsonReloadBtn = document.getElementById('reload-prompts-json-btn');
+const promptsJsonTableToggle = document.getElementById('prompts-json-table-toggle');
+const promptsJsonTableWrapper = document.getElementById('prompts-json-table-wrapper');
+const promptsJsonTableBody = document.getElementById('prompts-json-table-body');
+const clearPromptsBtn = document.getElementById('clear-prompts-btn');
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+async function loadPromptsJson() {
+  if (!token) return;
+  promptsJsonStatus.textContent = 'Loading...';
+  promptsJsonPre.textContent = '';
+  promptsJsonTableBody.innerHTML = '';
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, {
+      headers: { 'Authorization': token }
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server responded ${res.status}: ${txt}`);
+    }
+
+    const data = await res.json();
+
+    // Pretty print raw JSON
+    promptsJsonPre.textContent = JSON.stringify(data, null, 2);
+
+    // Render table if toggled and data is an array
+    if (Array.isArray(data) && promptsJsonTableToggle.checked) {
+      data.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        const hasEmbedding = item && item.embedding && Array.isArray(item.embedding) && item.embedding.length > 0;
+        tr.innerHTML = `
+          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${idx + 1}</td>
+          <td style="border-bottom:1px solid #f0f0f0; padding:8px; white-space:pre-wrap;">${escapeHtml(item.text || '')}</td>
+          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.createdAt || '')}</td>
+          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.id || '')}</td>
+          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${hasEmbedding ? 'Yes' : 'No'}</td>
+        `;
+        promptsJsonTableBody.appendChild(tr);
+      });
+    }
+
+    const count = Array.isArray(data) ? data.length : (data ? 1 : 0);
+    promptsJsonStatus.textContent = `Loaded ${count} record(s)`;
+  } catch (err) {
+    console.error('Failed to load prompts.json:', err);
+    promptsJsonStatus.textContent = 'Error loading prompts';
+    promptsJsonPre.textContent = `Error: ${err.message}`;
+  }
+}
+
+// UI wiring
+if (promptsJsonReloadBtn) {
+  promptsJsonReloadBtn.addEventListener('click', () => {
+    loadPromptsJson();
+  });
+}
+if (promptsJsonTableToggle) {
+  promptsJsonTableToggle.addEventListener('change', () => {
+    // Toggle table visibility and re-render to fill the rows
+    promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
+    loadPromptsJson();
+  });
+}
+if (clearPromptsBtn) {
+  clearPromptsBtn.addEventListener('click', async () => {
+    if (!confirm('This will wipe all saved prompts. Continue?')) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
+        method: 'POST',
+        headers: { 'Authorization': token }
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Server responded ${res.status}: ${txt}`);
+      }
+      await loadPromptsJson();
+      await loadPromptHistory(); // keep legacy view in sync
+      alert('Prompts cleared.');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to clear prompts.');
+    }
+  });
 }
 </script>
 </body>
