@@ -133,9 +133,11 @@ async function updateSentiment() {
 }
 
 async function loadPromptHistory() {
-  const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
+  const res = await fetch(`${BASE_URL}/api/admin/raw-prompts`, { headers: { 'Authorization': token } });
   const prompts = await res.json();
-  document.getElementById('prompt-history').innerHTML = '<h3>Prompt History</h3>' + prompts.map(p => `<p>${p}</p>`).join('');
+  document.getElementById('prompt-history').innerHTML =
+    '<h3>Prompt History</h3>' +
+    prompts.map(p => `<p>${p.text} <small>[Embedding length: ${p.embedding.length}]</small></p>`).join('');
 }
 
 async function loadChatHistory() {
