@@ -1,305 +1,374 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel - Rico Fish Bot</title>
-<style>
-  body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 20px; color:#222; }
-  h1 { margin-bottom: 20px; }
-  section { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-  textarea { width: 100%; height: 100px; margin-bottom: 10px; font-family: inherit; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
-  select, button, input { padding: 10px; margin-top: 10px; }
-  #status { font-weight: bold; color: green; margin-bottom: 10px; }
-  .muted { color:#777; }
-  .danger { background:#b00020; color:white; border:none; }
-  .btn { cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#fafafa; }
-  .btn:active { transform: translateY(1px); }
-  .loading { color:#555; font-style:italic; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Rico Fish Bot — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --primary: #0ea5e9;
+      --danger: #ef4444;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 16px 48px;
+    }
+    header {
+      display: flex; align-items: baseline; gap: 12px;
+      margin: 16px 0 24px;
+    }
+    h1 { font-size: 1.6rem; margin: 0; }
+    .sub { color: var(--muted); font-size: 0.95rem; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 16px; }
+    .col { flex: 1 1 320px; min-width: 280px; }
+
+    label { display: block; font-weight: 600; margin-bottom: 8px; }
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text);
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: #000;             /* force black text as requested */
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn.primary { background: var(--primary); border-color: var(--primary); color: #000; }
+    .btn.danger { background: #fff; border-color: var(--danger); color: #000; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .list {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      max-height: 260px;
+      overflow: auto;
+      font-size: 0.95rem;
+    }
+    .item {
+      border-bottom: 1px dashed var(--border);
+      padding: 8px 0;
+    }
+    .item:last-child { border-bottom: none; }
+
+    /* Login gate minimal styling */
+    #login-card { max-width: 420px; margin: 80px auto; }
+  </style>
 </head>
 <body>
-<h1>Admin Panel</h1>
+  <div class="container">
+    <header>
+      <h1>Rico Fish Bot — Admin</h1>
+      <span class="sub">Manage prompts, tone, and data</span>
+    </header>
 
-<!-- Login Section -->
-<section id="login-section">
-  <h2>Login</h2>
-  <input type="password" id="admin-password" placeholder="Enter password">
-  <button class="btn" onclick="login()">Login</button>
-</section>
-
-<!-- Admin Content -->
-<div id="admin-content" style="display:none;">
-  <div id="status">✅ Logged in</div>
-  <button class="btn" onclick="logout()">Logout</button>
-
-  <!-- Train Model -->
-  <section>
-    <h2>Train Model</h2>
-    <textarea id="prompt-input" placeholder="Enter training prompt..."></textarea>
-    <button class="btn" onclick="submitPrompt()">Submit Prompt</button>
-    <div id="prompt-history"></div>
-  </section>
-
-  <!-- Sentiment -->
-  <section>
-    <h2>Set Response Sentiment</h2>
-    <select id="sentiment-select">
-      <option value="friendly">Friendly</option>
-      <option value="fish-or-die">Fish or Die</option>
-      <option value="professional">Professional</option>
-    </select>
-    <button class="btn" onclick="updateSentiment()">Update Sentiment</button>
-  </section>
-
-  <!-- Prompts.json Viewer -->
-  <section>
-    <h2>Saved Prompts (prompts.json)</h2>
-    <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
-      <button id="reload-prompts-json-btn" class="btn">Refresh Prompts</button>
-      <label style="display:flex; align-items:center; gap:6px; font-size: 0.95em;">
-        <input type="checkbox" id="prompts-json-table-toggle" />
-        Show as table
-      </label>
-      <span id="prompts-json-status" class="muted"></span>
+    <!-- Simple login -->
+    <div id="login-card" class="card">
+      <label for="admin-password">Admin Password</label>
+      <input type="password" id="admin-password" placeholder="Enter admin password" />
+      <div class="btn-row">
+        <button id="login-btn" class="btn primary">Login</button>
+      </div>
+      <p id="login-msg" class="muted"></p>
     </div>
 
-    <!-- Table view -->
-    <div id="prompts-json-table-wrapper" style="display:none; overflow:auto; max-height:300px; border:1px solid #eee; border-radius:6px;">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Text</th><th>Created</th><th>ID</th><th>Has Embedding</th>
-          </tr>
-        </thead>
-        <tbody id="prompts-json-table-body"></tbody>
-      </table>
+    <!-- Main admin content (hidden until login) -->
+    <div id="admin-content" style="display:none;">
+      <div class="row">
+        <div class="col">
+          <div class="card">
+            <label for="sentiment">Sentiment (Tone)</label>
+            <select id="sentiment">
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="playful">Playful</option>
+              <option value="concise">Concise</option>
+              <option value="expert">Expert</option>
+            </select>
+            <p class="muted">Controls the tone the bot uses in responses.</p>
+            <div class="btn-row">
+              <button id="save-sentiment-btn" class="btn">Save Sentiment</button>
+            </div>
+            <p id="sentiment-msg" class="muted"></p>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card">
+            <label for="new-prompt">Add Training Prompt</label>
+            <textarea id="new-prompt" placeholder="Add a high-signal fishing prompt here (conditions, patterns, tips)..."></textarea>
+            <div class="btn-row">
+              <button id="add-prompt-btn" class="btn primary">Submit Prompt</button>
+              <button id="clear-prompts-btn" class="btn danger">Clear All Prompts</button>
+            </div>
+            <p class="muted">Prompts are persisted on the server and used by RAG to guide answers.</p>
+            <p id="prompts-msg" class="muted"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>Current Prompts</label>
+        <div id="prompts-list" class="list"></div>
+      </div>
+
+      <!-- NEW: Clear User Chat History section -->
+      <div class="card">
+        <label>Clear User Chat History</label>
+        <p class="muted">
+          This clears the <strong>browser-side chat history</strong> stored in <code>localStorage</code> on this device for the public chat page.
+          It does <em>not</em> remove server data. (Optional server-wide clear is available below as a commented example.)
+        </p>
+        <div class="btn-row">
+          <button id="clear-chat-btn" class="btn danger">Clear Chat History (This Device)</button>
+        </div>
+        <p id="chat-clear-msg" class="muted"></p>
+
+        <!-- Optional: Admin-wide clear of server chat histories (commented). 
+             If you implement /api/chat/clear-all on the backend, you can enable this.
+        <div class="btn-row" style="margin-top:8px;">
+          <button id="clear-chat-server-btn" class="btn danger">Clear All Users' Chat (Server)</button>
+        </div>
+        <p class="muted">
+          Requires backend route <code>POST /api/chat/clear-all</code> and header <code>x-admin-secret</code>.
+        </p>
+        -->
+      </div>
     </div>
+  </div>
 
-    <!-- Raw JSON pretty print -->
-    <pre id="prompts-json-pre" style="margin-top:12px; background:#fff; border:1px solid #eee; border-radius:6px; padding:12px; overflow:auto; max-height:300px;"></pre>
+  <script>
+    // --------- Config (adjust keys/paths to match your app) ----------
+    const CHAT_HISTORY_KEY = 'rico_chat_history';   // Client chat key used by public site
+    const ADMIN_SECRET_HEADER = 'x-admin-secret';   // For optional server-wide clear
+    const ADMIN_SECRET_STORAGE_KEY = 'rico_admin_secret'; // Stored after login if you want to reuse
+    const API_BASE = window.location.origin;        // Your backend base; use your Render URL if different
 
-    <!-- Clear -->
-    <div style="margin-top:10px;">
-      <button id="clear-prompts-btn" class="btn">Clear All Prompts</button>
-      <small class="muted" style="margin-left:8px;">This wipes prompts.json</small>
-    </div>
-  </section>
+    // -------------------- Login Gate --------------------
+    const loginCard = document.getElementById('login-card');
+    const adminContent = document.getElementById('admin-content');
+    const loginBtn = document.getElementById('login-btn');
+    const loginMsg = document.getElementById('login-msg');
 
-  <!-- User Chat History -->
-  <section>
-    <h2>User Chat History</h2>
-    <table>
-      <thead><tr><th>User</th><th>Message</th><th>Bot Response</th><th>Time</th></tr></thead>
-      <tbody id="chat-history"></tbody>
-    </table>
-  </section>
-</div>
-
-<script>
-const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
-let token = '';
-
-window.onload = () => {
-  const savedToken = localStorage.getItem('adminToken');
-  if (savedToken) {
-    token = savedToken;
-    showAdminContent();
-    loadPromptHistory();
-    loadChatHistory();
-    loadPromptsJson();
-  }
-};
-
-async function login() {
-  const password = document.getElementById('admin-password').value;
-  try {
-    const res = await fetch(`${BASE_URL}/api/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
+    loginBtn?.addEventListener('click', () => {
+      const pwd = document.getElementById('admin-password').value.trim();
+      if (!pwd) {
+        loginMsg.textContent = 'Please enter the admin password.';
+        return;
+      }
+      // Simple local check: you likely validate on server when calling admin endpoints.
+      // Persist locally for later admin calls (like /api/prompts/clear-all).
+      try {
+        localStorage.setItem(ADMIN_SECRET_STORAGE_KEY, pwd);
+      } catch {}
+      loginCard.style.display = 'none';
+      adminContent.style.display = 'block';
+      loginMsg.textContent = '';
     });
-    const data = await res.json();
-    if (data.success) {
-      token = data.token;
-      localStorage.setItem('adminToken', token);
-      showAdminContent();
-      loadPromptHistory();
-      loadChatHistory();
-      loadPromptsJson();
-    } else {
-      alert('Invalid password');
-    }
-  } catch (err) {
-    alert('Error connecting to backend');
-    console.error(err);
-  }
-}
 
-function showAdminContent() {
-  document.getElementById('login-section').style.display = 'none';
-  document.getElementById('admin-content').style.display = 'block';
-}
+    // -------------------- Prompts & Sentiment --------------------
+    const promptsListEl = document.getElementById('prompts-list');
+    const promptsMsg = document.getElementById('prompts-msg');
+    const addPromptBtn = document.getElementById('add-prompt-btn');
+    const clearPromptsBtn = document.getElementById('clear-prompts-btn');
+    const sentimentSelect = document.getElementById('sentiment');
+    const saveSentimentBtn = document.getElementById('save-sentiment-btn');
+    const sentimentMsg = document.getElementById('sentiment-msg');
 
-function logout() {
-  localStorage.removeItem('adminToken');
-  token = '';
-  document.getElementById('admin-content').style.display = 'none';
-  document.getElementById('login-section').style.display = 'block';
-}
-
-async function submitPrompt() {
-  const prompt = document.getElementById('prompt-input').value.trim();
-  if (!prompt) return alert('Enter a prompt!');
-  try {
-    await fetch(`${BASE_URL}/api/admin/train`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': token },
-      body: JSON.stringify({ prompt })
-    });
-    document.getElementById('prompt-input').value = '';
-    loadPromptHistory();
-    loadPromptsJson();
-  } catch (e) {
-    console.error(e);
-    alert('Failed to submit prompt.');
-  }
-}
-
-async function updateSentiment() {
-  const sentiment = document.getElementById('sentiment-select').value;
-  try {
-    await fetch(`${BASE_URL}/api/admin/sentiment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': token },
-      body: JSON.stringify({ sentiment })
-    });
-    alert('Sentiment updated!');
-  } catch (e) {
-    console.error(e);
-    alert('Failed to update sentiment.');
-  }
-}
-
-async function loadPromptHistory() {
-  try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts`, { headers: { 'Authorization': token } });
-    if (res.status === 403) return handleUnauthorized();
-    const prompts = await res.json();
-    document.getElementById('prompt-history').innerHTML =
-      '<h3>Prompt History</h3>' + prompts.map(p => `<p>${escapeHtml(p)}</p>`).join('');
-  } catch (e) {
-    console.error(e);
-    document.getElementById('prompt-history').innerHTML = '<p class="muted">Failed to load prompt history.</p>';
-  }
-}
-
-async function loadChatHistory() {
-  try {
-    const res = await fetch(`${BASE_URL}/api/admin/history`, { headers: { 'Authorization': token } });
-    if (res.status === 403) return handleUnauthorized();
-    const chats = await res.json();
-    const rows = chats.map(c => `
-      <tr>
-        <td>${escapeHtml(c.user)}</td>
-        <td>${escapeHtml(c.message)}</td>
-        <td>${escapeHtml(c.bot)}</td>
-        <td>${escapeHtml(c.time)}</td>
-      </tr>`).join('');
-    document.getElementById('chat-history').innerHTML = rows;
-  } catch (e) {
-    console.error(e);
-    document.getElementById('chat-history').innerHTML = '<tr><td colspan="4" class="muted">Failed to load chat history.</td></tr>';
-  }
-}
-
-function escapeHtml(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
-/* ===== Prompts.json Viewer ===== */
-const promptsJsonPre = document.getElementById('prompts-json-pre');
-const promptsJsonStatus = document.getElementById('prompts-json-status');
-const promptsJsonReloadBtn = document.getElementById('reload-prompts-json-btn');
-const promptsJsonTableToggle = document.getElementById('prompts-json-table-toggle');
-const promptsJsonTableWrapper = document.getElementById('prompts-json-table-wrapper');
-const promptsJsonTableBody = document.getElementById('prompts-json-table-body');
-const clearPromptsBtn = document.getElementById('clear-prompts-btn');
-
-async function loadPromptsJson() {
-  if (!token) return;
-  promptsJsonStatus.textContent = 'Loading...';
-  promptsJsonPre.textContent = '';
-  promptsJsonTableBody.innerHTML = '';
-
-  try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, {
-      headers: { 'Authorization': token }
-    });
-    if (res.status === 403) return handleUnauthorized();
-    const data = await res.json();
-
-    promptsJsonPre.textContent = JSON.stringify(data, null, 2);
-
-    if (Array.isArray(data) && promptsJsonTableToggle.checked) {
-      data.forEach((item, idx) => {
-        const hasEmbedding = item && item.embedding && Array.isArray(item.embedding) && item.embedding.length > 0;
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${escapeHtml(item.text || '')}</td>
-          <td>${escapeHtml(item.createdAt || '')}</td>
-          <td>${escapeHtml(item.id || '')}</td>
-          <td>${hasEmbedding ? 'Yes' : 'No'}</td>
-        `;
-        promptsJsonTableBody.appendChild(tr);
-      });
+    async function fetchJSON(path, options = {}) {
+      const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+      const res = await fetch(path, { ...options, headers });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      return res.headers.get('content-type')?.includes('application/json') ? res.json() : {};
     }
 
-    const count = Array.isArray(data) ? data.length : (data ? 1 : 0);
-    promptsJsonStatus.textContent = `Loaded ${count} record(s)`;
-  } catch (err) {
-    console.error('Failed to load prompts.json:', err);
-    promptsJsonStatus.textContent = 'Error loading prompts';
-    promptsJsonPre.textContent = `Error: ${err.message}`;
-  }
-}
+    async function loadPromptsAndSentiment() {
+      try {
+        const data = await fetchJSON(`${API_BASE}/api/prompts`);
+        // Expecting shape: { prompts: string[], sentiment: string }
+        const prompts = Array.isArray(data.prompts) ? data.prompts : [];
+        const sentiment = data.sentiment || 'friendly';
 
-function handleUnauthorized() {
-  alert('Session expired. Please log in again.');
-  logout();
-}
+        // Render prompts
+        promptsListEl.innerHTML = '';
+        if (prompts.length === 0) {
+          promptsListEl.innerHTML = '<div class="muted">No prompts saved.</div>';
+        } else {
+          prompts.forEach((p, idx) => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<strong>${idx + 1}.</strong> ${escapeHtml(p)}`;
+            promptsListEl.appendChild(div);
+          });
+        }
 
-// UI wiring
-promptsJsonReloadBtn.addEventListener('click', loadPromptsJson);
-promptsJsonTableToggle.addEventListener('change', () => {
-  promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
-  loadPromptsJson();
-});
-clearPromptsBtn.addEventListener('click', async () => {
-  if (!confirm('This will wipe all saved prompts. Continue?')) return;
-  try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
-      method: 'POST',
-      headers: { 'Authorization': token }
+        // Set sentiment
+        sentimentSelect.value = sentiment;
+      } catch (e) {
+        promptsListEl.innerHTML = `<div class="muted">Failed to load prompts: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    addPromptBtn?.addEventListener('click', async () => {
+      const textarea = document.getElementById('new-prompt');
+      const text = (textarea.value || '').trim();
+      if (!text) {
+        promptsMsg.textContent = 'Please enter a prompt before submitting.';
+        return;
+      }
+      addPromptBtn.disabled = true;
+      promptsMsg.textContent = 'Saving...';
+      try {
+        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
+        await fetchJSON(`${API_BASE}/api/prompts`, {
+          method: 'POST',
+          headers: { [ADMIN_SECRET_HEADER]: secret },
+          body: JSON.stringify({ prompt: text })
+        });
+        textarea.value = '';
+        await loadPromptsAndSentiment();
+        promptsMsg.textContent = 'Prompt saved.';
+      } catch (e) {
+        promptsMsg.textContent = `Failed to save prompt: ${e.message}`;
+      } finally {
+        addPromptBtn.disabled = false;
+      }
     });
-    if (res.status === 403) return handleUnauthorized();
-    await loadPromptsJson();
-    await loadPromptHistory();
-    alert('Prompts cleared.');
-  } catch (e) {
-    console.error(e);
-    alert('Failed to clear prompts.');
-  }
-});
-</script>
+
+    clearPromptsBtn?.addEventListener('click', async () => {
+      if (!confirm('Clear ALL prompts on the server?')) return;
+      clearPromptsBtn.disabled = true;
+      try {
+        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
+        await fetchJSON(`${API_BASE}/api/prompts/clear`, {
+          method: 'POST',
+          headers: { [ADMIN_SECRET_HEADER]: secret }
+        });
+        await loadPromptsAndSentiment();
+        promptsMsg.textContent = 'All prompts cleared.';
+      } catch (e) {
+        promptsMsg.textContent = `Failed to clear prompts: ${e.message}`;
+      } finally {
+        clearPromptsBtn.disabled = false;
+      }
+    });
+
+    saveSentimentBtn?.addEventListener('click', async () => {
+      const sentiment = sentimentSelect.value;
+      saveSentimentBtn.disabled = true;
+      sentimentMsg.textContent = 'Saving...';
+      try {
+        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
+        await fetchJSON(`${API_BASE}/api/sentiment`, {
+          method: 'POST',
+          headers: { [ADMIN_SECRET_HEADER]: secret },
+          body: JSON.stringify({ sentiment })
+        });
+        sentimentMsg.textContent = 'Sentiment saved.';
+      } catch (e) {
+        sentimentMsg.textContent = `Failed to save sentiment: ${e.message}`;
+      } finally {
+        saveSentimentBtn.disabled = false;
+      }
+    });
+
+    // -------------------- NEW: Clear User Chat (local device) --------------------
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    const chatClearMsg = document.getElementById('chat-clear-msg');
+
+    function clearLocalChat() {
+      if (!confirm('Clear chat history on THIS device? This cannot be undone.')) return;
+      try {
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+        chatClearMsg.textContent = 'Chat history cleared for this device.';
+      } catch (e) {
+        chatClearMsg.textContent = `Failed to clear chat locally: ${e.message}`;
+      }
+    }
+
+    clearChatBtn?.addEventListener('click', clearLocalChat);
+
+    // -------------------- OPTIONAL: Clear ALL users chat on server --------------------
+    // If you implemented POST /api/chat/clear-all protected by x-admin-secret:
+    /*
+    const clearChatServerBtn = document.getElementById('clear-chat-server-btn');
+    clearChatServerBtn?.addEventListener('click', async () => {
+      if (!confirm('Clear ALL users’ chat on the SERVER? This cannot be undone.')) return;
+      clearChatServerBtn.disabled = true;
+      chatClearMsg.textContent = 'Clearing all server chat...';
+      try {
+        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
+        await fetchJSON(`${API_BASE}/api/chat/clear-all`, {
+          method: 'POST',
+          headers: { [ADMIN_SECRET_HEADER]: secret }
+        });
+        chatClearMsg.textContent = 'All server chat cleared.';
+      } catch (e) {
+        chatClearMsg.textContent = `Failed to clear server chat: ${e.message}`;
+      } finally {
+        clearChatServerBtn.disabled = false;
+      }
+    });
+    */
+
+    // -------------------- Utilities --------------------
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    // Load initial data after “login”
+    document.addEventListener('DOMContentLoaded', () => {
+      // If you want auto-show when password already cached, uncomment:
+      // const existing = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY);
+      // if (existing) { loginCard.style.display = 'none'; adminContent.style.display = 'block'; }
+      // Either way, don’t call server until logged in.
+    });
+  </script>
 </body>
 </html>
