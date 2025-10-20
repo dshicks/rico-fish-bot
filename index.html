@@ -1,154 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rico Fish Bot</title>
-  <style>
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f0f8ff;
-  margin: 0;
-  color: #222;
-}
+<script>
+  const chatBox = document.getElementById('chat-box');
+  const chatForm = document.getElementById('chat-form');
+  const userInput = document.getElementById('user-input');
 
-header {
-  position: relative;
-  background: url('sunrise-over-redfish-bay.jpg') center/cover no-repeat;
-  padding: 80px 20px;
-  text-align: center;
-  color: #fff;
-}
+  // ✅ Replace with your OpenWeatherMap API key
+  const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
 
-header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4); /* Semi-transparent overlay for contrast */
-}
+  // =========================
+  // NOAA CO-OPS (Tides)
+  // =========================
+  // Rockport, TX (near Redfish Bay) tide station
+  const NOAA_STATION = "8774770";
+  const NOAA_DATUM = "MLLW";     // mean lower low water (common for anglers)
+  const NOAA_UNITS = "english";  // feet
+  const NOAA_TZ = "lst_ldt";     // local time w/ DST
+  const NOAA_PRODUCT = "predictions";
+  const NOAA_INTERVAL = "hilo";  // just high/low events
 
-header h1,
-header p {
-  position: relative; /* So text stays above overlay */
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
-}
+  // Helpers
+  const yyyymmdd = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}${m}${day}`;
+  };
 
-header h1 {
-  font-size: 3em;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
+  // ✅ Fetch NOAA tide data for ~24h window (today -> tomorrow), summarized for chat
+  async function getTideData() {
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
-header p {
-  font-size: 1.6em;
-  font-weight: 400;
-  margin-bottom: 20px;
-}
-    section { padding: 40px 20px; max-width: 800px; margin: auto; }
-    #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
-    .user-msg { background: #d1e7ff; text-align: right; }
-    .bot-msg { background: #e6f7ff; text-align: left; }
-    input, button { font-size: 1em; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Rico Fish Bot</h1>
-    <p>Your AI Fishing Guide for Rockport, TX</p>
-  </header>
+    const url =
+      `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?` +
+      `station=${NOAA_STATION}&product=${NOAA_PRODUCT}&datum=${NOAA_DATUM}` +
+      `&units=${NOAA_UNITS}&time_zone=${NOAA_TZ}&format=json&interval=${NOAA_INTERVAL}` +
+      `&begin_date=${yyyymmdd(today)}&end_date=${yyyymmdd(tomorrow)}`;
 
-  <section>
-    <h2>🎣 Chat with Rico Fish Bot</h2>
-    <div id="chat-box" style="background:#f9f9f9; border:1px solid #ccc; padding:15px; border-radius:10px; max-height:300px; overflow-y:auto;"></div>
-    <form id="chat-form" style="margin-top:10px;">
-      <input type="text" id="user-input" value="I want to fish tomorrow at 6:00AM" style="width:75%; padding:10px;" />
-      <button type="submit" style="padding:10px;">Send</button>
-    </form>
-  </section>
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`NOAA error ${res.status}`);
+    const data = await res.json();
+    const preds = data?.predictions || [];
 
-  <script>
-    const chatBox = document.getElementById('chat-box');
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
+    if (!preds.length) return "Tide data unavailable.";
 
-    // ✅ Replace with your OpenWeatherMap API key
-    const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
+    // Build a compact summary like: "High 6:12 AM 1.85ft; Low 12:47 PM 0.12ft; ..."
+    const summary = preds.slice(0, 4).map(p => {
+      const dt = new Date(p.t);
+      const hhmm = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      const label = p.type === 'H' ? 'High' : 'Low';
+      const height = Number.parseFloat(p.v).toFixed(2);
+      return `${label} ${hhmm} ${height}ft`;
+    }).join('; ');
 
-    // ✅ Fetch real-time weather data for Rockport, TX
-    async function getWeatherData() {
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
-      const res = await fetch(url);
-      const data = await res.json();
+    return `${summary} (NOAA ${NOAA_STATION} ${NOAA_DATUM})`;
+  }
 
-      console.log("Weather API response:", data); // Debug in browser console
+  // =========================
+  // OpenWeather: real-time weather for Rockport, TX
+  // =========================
+  async function getWeatherData() {
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-      if (data.cod !== 200 || !data.main) {
-        return "Weather data unavailable.";
-      }
+    console.log("Weather API response:", data); // Debug in browser console
 
-      const temp = data.main.temp ?? "N/A";
-      const feelsLike = data.main.feels_like ?? "N/A";
-      const humidity = data.main.humidity ?? "N/A";
-      const windSpeed = data.wind.speed ?? "N/A";
-      const condition = data.weather[0]?.description ?? "N/A";
-
-      return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+    if (data.cod !== 200 || !data.main) {
+      return "Weather data unavailable.";
     }
 
-    // ✅ Chat logic
-    chatForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const message = userInput.value.trim();
-      if (!message) return;
+    const temp = data.main.temp ?? "N/A";
+    const feelsLike = data.main.feels_like ?? "N/A";
+    const humidity = data.main.humidity ?? "N/A";
+    const windSpeed = data.wind.speed ?? "N/A";
+    const condition = data.weather[0]?.description ?? "N/A";
 
-      appendMessage("You", message, "user-msg");
-      userInput.value = "";
-      appendMessage("Rico Fish Bot", "🌤 Fetching weather data...", "bot-msg");
+    return `Temp: ${temp}°F (Feels like ${feelsLike}°F), Humidity: ${humidity}%, Wind: ${windSpeed} mph, Conditions: ${condition}`;
+  }
 
-      try {
-        const weatherInfo = await getWeatherData();
+  // =========================
+  // Chat logic (Weather + Tide)
+  // =========================
+  chatForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const message = userInput.value.trim();
+    if (!message) return;
 
-        appendMessage("Rico Fish Bot", "✅ Weather loaded. Thinking...", "bot-msg");
+    appendMessage("You", message, "user-msg");
+    userInput.value = "";
+    appendMessage("Rico Fish Bot", "🌤 Fetching weather and 🌊 tide data...", "bot-msg");
 
+    try {
+      // Fetch both in parallel
+      const [weatherInfo, tideInfo] = await Promise.all([
+        getWeatherData(),
+        getTideData()
+      ]);
 
-        const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: `${message} (Weather: ${weatherInfo})` })
-        });
+      appendMessage("Rico Fish Bot", "✅ Data loaded. Thinking...", "bot-msg");
 
+      const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `${message} (Weather: ${weatherInfo}) (Tide: ${tideInfo})`
+        })
+      });
 
-        const data = await response.json();
-        const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
-        updateLastBotMessage(reply);
-      } catch (error) {
-        console.error(error);
-        updateLastBotMessage("⚠️ Error connecting to backend.");
-      }
-    });
-
-    function appendMessage(sender, text, className) {
-      const msg = document.createElement('p');
-      msg.className = className;
-      msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
-      chatBox.appendChild(msg);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
+      updateLastBotMessage(reply);
+    } catch (error) {
+      console.error(error);
+      updateLastBotMessage("⚠️ Error fetching weather/tide or connecting to backend.");
     }
+  });
 
-    function updateLastBotMessage(text) {
-      const botMessages = chatBox.querySelectorAll("p.bot-msg");
-      if (botMessages.length > 0) {
-        botMessages[botMessages.length - 1].innerHTML = `<strong>Rico Fish Bot:</strong> ${text}`;
-      }
+  function appendMessage(sender, text, className) {
+    const msg = document.createElement('p');
+    msg.className = className;
+    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatBox.appendChild(msg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function updateLastBotMessage(text) {
+    const botMessages = chatBox.querySelectorAll("p.bot-msg");
+    if (botMessages.length > 0) {
+      botMessages[botMessages.length - 1].innerHTML = `<strong>Rico Fish Bot:</strong> ${text}`;
     }
-  </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
+  }
+</script>
