@@ -15,11 +15,7 @@
   #status { font-weight: bold; color: green; margin-bottom: 10px; }
 </style>
 </head>
-<body>
-<h1>Admin Panel</h1>
-
-<!-- Login Section -->
-<section id="login-section">
+<bodylogin-section">
   <h2>Login</h2>
   <input type="password" id="admin-password" placeholder="Enter password">
   <button onclick="login()">Login</button>
@@ -35,6 +31,7 @@
     <h2>Train Model</h2>
     <textarea id="prompt-input" placeholder="Enter training prompt..."></textarea>
     <button onclick="submitPrompt()">Submit Prompt</button>
+    <button onclick="clearPrompts()" style="background:#ff4d4d;color:#fff;">Clear All Prompts</button>
     <div id="prompt-history"></div>
   </section>
 
@@ -122,6 +119,15 @@ async function submitPrompt() {
   loadPromptHistory();
 }
 
+async function clearPrompts() {
+  if (!confirm('Are you sure you want to clear all prompts?')) return;
+  await fetch(`${BASE_URL}/api/admin/clear-prompts`, {
+    method: 'POST',
+    headers: { 'Authorization': token }
+  });
+  loadPromptHistory();
+}
+
 async function updateSentiment() {
   const sentiment = document.getElementById('sentiment-select').value;
   await fetch(`${BASE_URL}/api/admin/sentiment`, {
@@ -137,7 +143,7 @@ async function loadPromptHistory() {
   const prompts = await res.json();
   document.getElementById('prompt-history').innerHTML =
     '<h3>Prompt History</h3>' +
-    prompts.map(p => `<p>${p.text} <small>[Embedding length: ${p.embedding.length}]</small></p>`).join('');
+    (prompts.length ? prompts.map(p => `<p>${p.text} <small>[Embedding length: ${p.embedding.length}]</small></p>`).join('') : '<p>No prompts saved.</p>');
 }
 
 async function loadChatHistory() {
@@ -149,4 +155,3 @@ async function loadChatHistory() {
 </script>
 </body>
 </html>
-   
