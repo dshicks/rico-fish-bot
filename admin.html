@@ -12,6 +12,7 @@
   table { width: 100%; border-collapse: collapse; }
   th, td { padding: 8px; border-bottom: 1px solid #ddd; }
   select, button, input { padding: 10px; margin-top: 10px; }
+  #status { font-weight: bold; color: green; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -26,6 +27,9 @@
 
 <!-- Admin Content -->
 <div id="admin-content" style="display:none;">
+  <div id="status">✅ Logged in</div>
+  <button onclick="logout()">Logout</button>
+
   <!-- Train Model -->
   <section>
     <h2>Train Model</h2>
@@ -59,6 +63,17 @@
 const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
 let token = '';
 
+// ✅ Restore session on page load
+window.onload = () => {
+  const savedToken = localStorage.getItem('adminToken');
+  if (savedToken) {
+    token = savedToken;
+    showAdminContent();
+    loadPromptHistory();
+    loadChatHistory();
+  }
+};
+
 async function login() {
   const password = document.getElementById('admin-password').value;
   try {
@@ -70,8 +85,8 @@ async function login() {
     const data = await res.json();
     if (data.success) {
       token = data.token;
-      document.getElementById('login-section').style.display = 'none';
-      document.getElementById('admin-content').style.display = 'block';
+      localStorage.setItem('adminToken', token);
+      showAdminContent();
       loadPromptHistory();
       loadChatHistory();
     } else {
@@ -81,6 +96,18 @@ async function login() {
     alert('Error connecting to backend');
     console.error(err);
   }
+}
+
+function showAdminContent() {
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('admin-content').style.display = 'block';
+}
+
+function logout() {
+  localStorage.removeItem('adminToken');
+  token = '';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('login-section').style.display = 'block';
 }
 
 async function submitPrompt() {
@@ -120,3 +147,4 @@ async function loadChatHistory() {
 </script>
 </body>
 </html>
+   
