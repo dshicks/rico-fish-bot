@@ -95,6 +95,11 @@
   <!-- User Chat History -->
   <section>
     <h2>User Chat History</h2>
+    <!-- ✅ Added Clear Chat History Button -->
+    <div style="margin-top:10px;">
+      <button id="clear-chat-btn" class="danger btn">Clear Chat History</button>
+      <small class="muted" style="margin-left:8px;">This wipes all user chat history</small>
+    </div>
     <table>
       <thead><tr><th>User</th><th>Message</th><th>Bot Response</th><th>Time</th></tr></thead>
       <tbody id="chat-history"></tbody>
@@ -291,7 +296,6 @@ if (promptsJsonReloadBtn) {
 }
 if (promptsJsonTableToggle) {
   promptsJsonTableToggle.addEventListener('change', () => {
-    // Toggle table visibility and re-render to fill the rows
     promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
     loadPromptsJson();
   });
@@ -309,11 +313,34 @@ if (clearPromptsBtn) {
         throw new Error(`Server responded ${res.status}: ${txt}`);
       }
       await loadPromptsJson();
-      await loadPromptHistory(); // keep legacy view in sync
+      await loadPromptHistory();
       alert('Prompts cleared.');
     } catch (e) {
       console.error(e);
       alert('Failed to clear prompts.');
+    }
+  });
+}
+
+/* ✅ Clear Chat History Button Wiring */
+const clearChatBtn = document.getElementById('clear-chat-btn');
+if (clearChatBtn) {
+  clearChatBtn.addEventListener('click', async () => {
+    if (!confirm('This will delete all user chat history. Continue?')) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/history/clear`, {
+        method: 'POST',
+        headers: { 'Authorization': token }
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Server responded ${res.status}: ${txt}`);
+      }
+      await loadChatHistory();
+      alert('Chat history cleared.');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to clear chat history.');
     }
   });
 }
