@@ -5,213 +5,90 @@
   <title>Rico Fish Bot — Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --primary: #0ea5e9;
-      --danger: #ef4444;
-      --border: #e5e7eb;
-    }
     body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: system-ui, sans-serif;
+      background: #f8fafc;
+      color: #111827;
       margin: 0;
       padding: 0;
     }
-    .container {
-      max-width: 960px;
-      margin: 24px auto;
-      padding: 0 16px 48px;
-    }
-    header {
-      display: flex; align-items: baseline; gap: 12px;
-      margin: 16px 0 24px;
-    }
-    h1 { font-size: 1.6rem; margin: 0; }
-    .sub { color: var(--muted); font-size: 0.95rem; }
-
+    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
+      background: #fff;
+      border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
-    .row { display: flex; flex-wrap: wrap; gap: 16px; }
-    .col { flex: 1 1 320px; min-width: 280px; }
-
-    label { display: block; font-weight: 600; margin-bottom: 8px; }
-    input[type="text"], input[type="password"], textarea, select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-      font-size: 0.95rem;
-      box-sizing: border-box;
-    }
-    textarea { min-height: 120px; resize: vertical; }
-
     .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 8px;
       padding: 10px 14px;
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid #ccc;
       background: #fff;
-      color: #000;             /* force black text as requested */
+      color: #000; /* force black text */
       cursor: pointer;
       font-weight: 600;
     }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn.primary { background: var(--primary); border-color: var(--primary); color: #000; }
-    .btn.danger { background: #fff; border-color: var(--danger); color: #000; }
     .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-
-    .muted { color: var(--muted); font-size: 0.9rem; }
-    .list {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      background: #fff;
-      max-height: 260px;
-      overflow: auto;
-      font-size: 0.95rem;
-    }
-    .item {
-      border-bottom: 1px dashed var(--border);
-      padding: 8px 0;
-    }
-    .item:last-child { border-bottom: none; }
-
-    /* Login gate minimal styling */
-    #login-card { max-width: 420px; margin: 80px auto; }
+    .muted { color: #6b7280; font-size: 0.9rem; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Rico Fish Bot — Admin</h1>
-      <span class="sub">Manage prompts, tone, and data</span>
+      <p class="muted">Manage prompts, tone, and history</p>
     </header>
 
-    <!-- Simple login -->
-    <div id="login-card" class="card">
-      <label for="admin-password">Admin Password</label>
-      <input type="password" id="admin-password" placeholder="Enter admin password" />
+    <!-- Existing admin controls -->
+    <div class="card">
+      <label for="sentiment">Sentiment (Tone)</label>
+      <select id="sentiment">
+        <option value="friendly">Friendly</option>
+        <option value="professional">Professional</option>
+        <option value="playful">Playful</option>
+        <option value="concise">Concise</option>
+        <option value="expert">Expert</option>
+      </select>
       <div class="btn-row">
-        <button id="login-btn" class="btn primary">Login</button>
+        <button id="save-sentiment-btn" class="btn">Save Sentiment</button>
       </div>
-      <p id="login-msg" class="muted"></p>
+      <p id="sentiment-msg" class="muted"></p>
     </div>
 
-    <!-- Main admin content (hidden until login) -->
-    <div id="admin-content" style="display:none;">
-      <div class="row">
-        <div class="col">
-          <div class="card">
-            <label for="sentiment">Sentiment (Tone)</label>
-            <select id="sentiment">
-              <option value="friendly">Friendly</option>
-              <option value="professional">Professional</option>
-              <option value="playful">Playful</option>
-              <option value="concise">Concise</option>
-              <option value="expert">Expert</option>
-            </select>
-            <p class="muted">Controls the tone the bot uses in responses.</p>
-            <div class="btn-row">
-              <button id="save-sentiment-btn" class="btn">Save Sentiment</button>
-            </div>
-            <p id="sentiment-msg" class="muted"></p>
-          </div>
-        </div>
-
-        <div class="col">
-          <div class="card">
-            <label for="new-prompt">Add Training Prompt</label>
-            <textarea id="new-prompt" placeholder="Add a high-signal fishing prompt here (conditions, patterns, tips)..."></textarea>
-            <div class="btn-row">
-              <button id="add-prompt-btn" class="btn primary">Submit Prompt</button>
-              <button id="clear-prompts-btn" class="btn danger">Clear All Prompts</button>
-            </div>
-            <p class="muted">Prompts are persisted on the server and used by RAG to guide answers.</p>
-            <p id="prompts-msg" class="muted"></p>
-          </div>
-        </div>
+    <div class="card">
+      <label for="new-prompt">Add Training Prompt</label>
+      <textarea id="new-prompt" placeholder="Enter a prompt..."></textarea>
+      <div class="btn-row">
+        <button id="add-prompt-btn" class="btn">Submit Prompt</button>
+        <button id="clear-prompts-btn" class="btn">Clear All Prompts</button>
       </div>
+      <p id="prompts-msg" class="muted"></p>
+    </div>
 
-      <div class="card">
-        <label>Current Prompts</label>
-        <div id="prompts-list" class="list"></div>
+    <div class="card">
+      <label>Current Prompts</label>
+      <div id="prompts-list" class="muted">Loading...</div>
+    </div>
+
+    <!-- ✅ NEW: Clear Server Chat History -->
+    <div class="card">
+      <label>Clear Chat History (Server)</label>
+      <p class="muted">This clears all chat history stored in <code>HISTORY_FILE</code> on the server.</p>
+      <div class="btn-row">
+        <button id="clear-chat-server-btn" class="btn">Clear Server Chat History</button>
       </div>
-
-      <!-- NEW: Clear User Chat History section -->
-      <div class="card">
-        <label>Clear User Chat History</label>
-        <p class="muted">
-          This clears the <strong>browser-side chat history</strong> stored in <code>localStorage</code> on this device for the public chat page.
-          It does <em>not</em> remove server data. (Optional server-wide clear is available below as a commented example.)
-        </p>
-        <div class="btn-row">
-          <button id="clear-chat-btn" class="btn danger">Clear Chat History (This Device)</button>
-        </div>
-        <p id="chat-clear-msg" class="muted"></p>
-
-        <!-- Optional: Admin-wide clear of server chat histories (commented). 
-             If you implement /api/chat/clear-all on the backend, you can enable this.
-        <div class="btn-row" style="margin-top:8px;">
-          <button id="clear-chat-server-btn" class="btn danger">Clear All Users' Chat (Server)</button>
-        </div>
-        <p class="muted">
-          Requires backend route <code>POST /api/chat/clear-all</code> and header <code>x-admin-secret</code>.
-        </p>
-        -->
-      </div>
+      <p id="chat-clear-server-msg" class="muted"></p>
     </div>
   </div>
 
   <script>
-    // --------- Config (adjust keys/paths to match your app) ----------
-    const CHAT_HISTORY_KEY = 'rico_chat_history';   // Client chat key used by public site
-    const ADMIN_SECRET_HEADER = 'x-admin-secret';   // For optional server-wide clear
-    const ADMIN_SECRET_STORAGE_KEY = 'rico_admin_secret'; // Stored after login if you want to reuse
-    const API_BASE = window.location.origin;        // Your backend base; use your Render URL if different
+    const API_BASE = window.location.origin;
 
-    // -------------------- Login Gate --------------------
-    const loginCard = document.getElementById('login-card');
-    const adminContent = document.getElementById('admin-content');
-    const loginBtn = document.getElementById('login-btn');
-    const loginMsg = document.getElementById('login-msg');
-
-    loginBtn?.addEventListener('click', () => {
-      const pwd = document.getElementById('admin-password').value.trim();
-      if (!pwd) {
-        loginMsg.textContent = 'Please enter the admin password.';
-        return;
-      }
-      // Simple local check: you likely validate on server when calling admin endpoints.
-      // Persist locally for later admin calls (like /api/prompts/clear-all).
-      try {
-        localStorage.setItem(ADMIN_SECRET_STORAGE_KEY, pwd);
-      } catch {}
-      loginCard.style.display = 'none';
-      adminContent.style.display = 'block';
-      loginMsg.textContent = '';
-    });
-
-    // -------------------- Prompts & Sentiment --------------------
-    const promptsListEl = document.getElementById('prompts-list');
-    const promptsMsg = document.getElementById('prompts-msg');
-    const addPromptBtn = document.getElementById('add-prompt-btn');
-    const clearPromptsBtn = document.getElementById('clear-prompts-btn');
-    const sentimentSelect = document.getElementById('sentiment');
-    const saveSentimentBtn = document.getElementById('save-sentiment-btn');
-    const sentimentMsg = document.getElementById('sentiment-msg');
+    // --- Clear Server Chat History ---
+    const clearChatServerBtn = document.getElementById('clear-chat-server-btn');
+    const chatClearServerMsg = document.getElementById('chat-clear-server-msg');
 
     async function fetchJSON(path, options = {}) {
       const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
@@ -220,154 +97,22 @@
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-      return res.headers.get('content-type')?.includes('application/json') ? res.json() : {};
+      return res.json();
     }
 
-    async function loadPromptsAndSentiment() {
-      try {
-        const data = await fetchJSON(`${API_BASE}/api/prompts`);
-        // Expecting shape: { prompts: string[], sentiment: string }
-        const prompts = Array.isArray(data.prompts) ? data.prompts : [];
-        const sentiment = data.sentiment || 'friendly';
-
-        // Render prompts
-        promptsListEl.innerHTML = '';
-        if (prompts.length === 0) {
-          promptsListEl.innerHTML = '<div class="muted">No prompts saved.</div>';
-        } else {
-          prompts.forEach((p, idx) => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `<strong>${idx + 1}.</strong> ${escapeHtml(p)}`;
-            promptsListEl.appendChild(div);
-          });
-        }
-
-        // Set sentiment
-        sentimentSelect.value = sentiment;
-      } catch (e) {
-        promptsListEl.innerHTML = `<div class="muted">Failed to load prompts: ${escapeHtml(e.message)}</div>`;
-      }
-    }
-
-    addPromptBtn?.addEventListener('click', async () => {
-      const textarea = document.getElementById('new-prompt');
-      const text = (textarea.value || '').trim();
-      if (!text) {
-        promptsMsg.textContent = 'Please enter a prompt before submitting.';
-        return;
-      }
-      addPromptBtn.disabled = true;
-      promptsMsg.textContent = 'Saving...';
-      try {
-        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
-        await fetchJSON(`${API_BASE}/api/prompts`, {
-          method: 'POST',
-          headers: { [ADMIN_SECRET_HEADER]: secret },
-          body: JSON.stringify({ prompt: text })
-        });
-        textarea.value = '';
-        await loadPromptsAndSentiment();
-        promptsMsg.textContent = 'Prompt saved.';
-      } catch (e) {
-        promptsMsg.textContent = `Failed to save prompt: ${e.message}`;
-      } finally {
-        addPromptBtn.disabled = false;
-      }
-    });
-
-    clearPromptsBtn?.addEventListener('click', async () => {
-      if (!confirm('Clear ALL prompts on the server?')) return;
-      clearPromptsBtn.disabled = true;
-      try {
-        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
-        await fetchJSON(`${API_BASE}/api/prompts/clear`, {
-          method: 'POST',
-          headers: { [ADMIN_SECRET_HEADER]: secret }
-        });
-        await loadPromptsAndSentiment();
-        promptsMsg.textContent = 'All prompts cleared.';
-      } catch (e) {
-        promptsMsg.textContent = `Failed to clear prompts: ${e.message}`;
-      } finally {
-        clearPromptsBtn.disabled = false;
-      }
-    });
-
-    saveSentimentBtn?.addEventListener('click', async () => {
-      const sentiment = sentimentSelect.value;
-      saveSentimentBtn.disabled = true;
-      sentimentMsg.textContent = 'Saving...';
-      try {
-        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
-        await fetchJSON(`${API_BASE}/api/sentiment`, {
-          method: 'POST',
-          headers: { [ADMIN_SECRET_HEADER]: secret },
-          body: JSON.stringify({ sentiment })
-        });
-        sentimentMsg.textContent = 'Sentiment saved.';
-      } catch (e) {
-        sentimentMsg.textContent = `Failed to save sentiment: ${e.message}`;
-      } finally {
-        saveSentimentBtn.disabled = false;
-      }
-    });
-
-    // -------------------- NEW: Clear User Chat (local device) --------------------
-    const clearChatBtn = document.getElementById('clear-chat-btn');
-    const chatClearMsg = document.getElementById('chat-clear-msg');
-
-    function clearLocalChat() {
-      if (!confirm('Clear chat history on THIS device? This cannot be undone.')) return;
-      try {
-        localStorage.removeItem(CHAT_HISTORY_KEY);
-        chatClearMsg.textContent = 'Chat history cleared for this device.';
-      } catch (e) {
-        chatClearMsg.textContent = `Failed to clear chat locally: ${e.message}`;
-      }
-    }
-
-    clearChatBtn?.addEventListener('click', clearLocalChat);
-
-    // -------------------- OPTIONAL: Clear ALL users chat on server --------------------
-    // If you implemented POST /api/chat/clear-all protected by x-admin-secret:
-    /*
-    const clearChatServerBtn = document.getElementById('clear-chat-server-btn');
     clearChatServerBtn?.addEventListener('click', async () => {
-      if (!confirm('Clear ALL users’ chat on the SERVER? This cannot be undone.')) return;
+      if (!confirm('Clear ALL chat history on the server? This cannot be undone.')) return;
       clearChatServerBtn.disabled = true;
-      chatClearMsg.textContent = 'Clearing all server chat...';
+      chatClearServerMsg.textContent = 'Clearing...';
       try {
-        const secret = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY) || '';
-        await fetchJSON(`${API_BASE}/api/chat/clear-all`, {
-          method: 'POST',
-          headers: { [ADMIN_SECRET_HEADER]: secret }
-        });
-        chatClearMsg.textContent = 'All server chat cleared.';
+        await fetchJSON(`${API_BASE}/api/history/clear`, { method: 'POST' });
+        chatClearServerMsg.textContent = 'Server chat history cleared.';
       } catch (e) {
-        chatClearMsg.textContent = `Failed to clear server chat: ${e.message}`;
+        chatClearServerMsg.textContent = `Failed: ${e.message}`;
+        console.error(e);
       } finally {
         clearChatServerBtn.disabled = false;
       }
-    });
-    */
-
-    // -------------------- Utilities --------------------
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-
-    // Load initial data after “login”
-    document.addEventListener('DOMContentLoaded', () => {
-      // If you want auto-show when password already cached, uncomment:
-      // const existing = localStorage.getItem(ADMIN_SECRET_STORAGE_KEY);
-      // if (existing) { loginCard.style.display = 'none'; adminContent.style.display = 'block'; }
-      // Either way, don’t call server until logged in.
     });
   </script>
 </body>
