@@ -70,12 +70,17 @@
     </form>
 
     <!-- ✅ Added Live Data Section -->
+
     <div id="live-data">
       <strong>Live Conditions:</strong>
       <p id="weather-info">Loading weather...</p>
       <p id="tide-info">Loading tide data...</p>
-      <p id="moon-info">Loading moon data...</p> <!-- ✅ Added -->
+      <p id="moon-info">Loading moon data...</p>
+      <p id="moonrise-info"></p>
+      <p id="moonset-info"></p>
+      <p id="moonlight-info"></p>
     </div>
+
   </section>
 
   <script>
@@ -147,7 +152,7 @@ async function getMoonData() {
       return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
     }
 
-
+   
       async function updateLiveData() {
         try {
           weatherInfoEl.textContent = await getWeatherData();
@@ -158,7 +163,8 @@ async function getMoonData() {
           document.getElementById('moonrise-info').textContent = `Moonrise: ${moon.rise}`;
           document.getElementById('moonset-info').textContent = `Moonset: ${moon.set}`;
           document.getElementById('moonlight-info').textContent = `Illumination: ${moon.illum}`;
-        } catch {
+        } catch (err) {
+          console.error(err);
           weatherInfoEl.textContent = "Error loading weather.";
           tideInfoEl.textContent = "Error loading tide data.";
           document.getElementById('moon-info').textContent = "Error loading moon data.";
@@ -215,6 +221,7 @@ async function getMoonData() {
   </script>
 </body>
 </html>
+
 
 
 
