@@ -24,12 +24,12 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4); /* Semi-transparent overlay for contrast */
+      background: rgba(0, 0, 0, 0.4);
     }
 
     header h1,
     header p {
-      position: relative; /* So text stays above overlay */
+      position: relative;
       text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
     }
 
@@ -50,6 +50,8 @@
     .user-msg { background: #d1e7ff; text-align: right; }
     .bot-msg { background: #e6f7ff; text-align: left; }
     input, button { font-size: 1em; }
+    #live-data { margin-top: 15px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
+    #live-data strong { display: block; margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -66,18 +68,24 @@
       <input type="text" id="user-input" value="I want to fish tomorrow at 6:00AM" style="width:75%; padding:10px;" />
       <button type="submit" style="padding:10px;">Send</button>
     </form>
+
+    <!-- ✅ Added Live Data Section -->
+    <div id="live-data">
+      <strong>Live Conditions:</strong>
+      <p id="weather-info">Loading weather...</p>
+      <p id="tide-info">Loading tide data...</p>
+    </div>
   </section>
 
   <script>
     const chatBox = document.getElementById('chat-box');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
+    const weatherInfoEl = document.getElementById('weather-info');
+    const tideInfoEl = document.getElementById('tide-info');
 
-    // ✅ Weather API key
     const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
-
-    // ✅ NOAA Tide settings
-    const NOAA_STATION = "8774770"; // Rockport, TX
+    const NOAA_STATION = "8774770";
     const NOAA_DATUM = "MLLW";
     const NOAA_UNITS = "english";
     const NOAA_TZ = "lst_ldt";
@@ -91,7 +99,6 @@
       return `${y}${m}${d}`;
     }
 
-    // ✅ Fetch NOAA tide data
     async function getTideData() {
       const today = new Date();
       const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -108,7 +115,6 @@
       }).join("; ");
     }
 
-    // ✅ Fetch weather data
     async function getWeatherData() {
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
       const res = await fetch(url);
@@ -117,7 +123,19 @@
       return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
     }
 
-    // ✅ Chat logic
+    async function updateLiveData() {
+      try {
+        weatherInfoEl.textContent = await getWeatherData();
+        tideInfoEl.textContent = await getTideData();
+      } catch {
+        weatherInfoEl.textContent = "Error loading weather.";
+        tideInfoEl.textContent = "Error loading tide data.";
+      }
+    }
+
+    // Initial load
+    updateLiveData();
+
     chatForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const message = userInput.value.trim();
@@ -163,5 +181,6 @@
   </script>
 </body>
 </html>
+
 
 
