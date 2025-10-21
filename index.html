@@ -69,13 +69,11 @@
       <button type="submit" style="padding:10px;">Send</button>
     </form>
 
-    <!-- ✅ Live Data Section -->
+    <!-- ✅ Added Live Data Section -->
     <div id="live-data">
       <strong>Live Conditions:</strong>
       <p id="weather-info">Loading weather...</p>
       <p id="tide-info">Loading tide data...</p>
-      <p id="sun-info">Loading sun data...</p>
-      <p id="moon-info">Loading moon data...</p>
     </div>
   </section>
 
@@ -85,8 +83,6 @@
     const userInput = document.getElementById('user-input');
     const weatherInfoEl = document.getElementById('weather-info');
     const tideInfoEl = document.getElementById('tide-info');
-    const sunInfoEl = document.getElementById('sun-info');
-    const moonInfoEl = document.getElementById('moon-info');
 
     const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
     const NOAA_STATION = "8774770";
@@ -127,38 +123,13 @@
       return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
     }
 
-    // ✅ Fetch sunrise/sunset
-    async function getSunData() {
-      const url = `https://api.sunrise-sunset.org/json?lat=28.0206&lng=-97.0544&formatted=0`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.results) return "Sun data unavailable.";
-      const sunrise = new Date(data.results.sunrise).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      const sunset = new Date(data.results.sunset).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      return `Sunrise: ${sunrise}, Sunset: ${sunset}`;
-    }
-
-    // ✅ Fetch moon phase (using WeatherAPI or similar)
-    async function getMoonData() {
-      // Replace YOUR_API_KEY with a free WeatherAPI key
-      const url = `https://api.weatherapi.com/v1/astronomy.json?key=YOUR_API_KEY&q=28.0206,-97.0544`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.astronomy) return "Moon data unavailable.";
-      return `Moon Phase: ${data.astronomy.astro.moon_phase}`;
-    }
-
     async function updateLiveData() {
       try {
         weatherInfoEl.textContent = await getWeatherData();
         tideInfoEl.textContent = await getTideData();
-        sunInfoEl.textContent = await getSunData();
-        moonInfoEl.textContent = await getMoonData();
       } catch {
         weatherInfoEl.textContent = "Error loading weather.";
         tideInfoEl.textContent = "Error loading tide data.";
-        sunInfoEl.textContent = "Error loading sun data.";
-        moonInfoEl.textContent = "Error loading moon data.";
       }
     }
 
@@ -172,18 +143,16 @@
 
       appendMessage("You", message, "user-msg");
       userInput.value = "";
-      appendMessage("Rico Fish Bot", "Fetching live data...", "bot-msg");
+      appendMessage("Rico Fish Bot", "Fetching weather and tide data...", "bot-msg");
 
       try {
-        const [weatherInfo, tideInfo, sunInfo, moonInfo] = await Promise.all([
-          getWeatherData(), getTideData(), getSunData(), getMoonData()
-        ]);
+        const [weatherInfo, tideInfo] = await Promise.all([getWeatherData(), getTideData()]);
         appendMessage("Rico Fish Bot", "Data loaded. Thinking...", "bot-msg");
 
         const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: `${message} (Weather: ${weatherInfo}) (Tide: ${tideInfo}) (Sun: ${sunInfo}) (Moon: ${moonInfo})` })
+          body: JSON.stringify({ message: `${message} (Weather: ${weatherInfo}) (Tide: ${tideInfo})` })
         });
 
         const data = await response.json();
@@ -212,6 +181,7 @@
   </script>
 </body>
 </html>
+
 
 
 
