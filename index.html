@@ -142,9 +142,7 @@ async function getMoonData() {
         const type = p.type === "H" ? "High" : "Low";
         return `${type} ${time} ${parseFloat(p.v).toFixed(2)}ft`;
       }).join("; ");
-    }
-
-    /*
+    } 
   
 async function getWeatherData() {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
@@ -168,42 +166,6 @@ async function getWeatherData() {
 }
 
 // Helper function
-function degToCompass(deg) {
-  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  const index = Math.round(deg / 45) % 8;
-  return directions[index];
-}
-*/
-
-    
-async function getWeatherData(targetDate = null) {
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  if (!data.list) return "Forecast unavailable.";
-
-  // If no targetDate, use first entry (current-ish)
-  if (!targetDate) targetDate = new Date();
-
-  // Find closest forecast to targetDate
-  let closest = data.list.reduce((prev, curr) => {
-    const prevDiff = Math.abs(new Date(prev.dt_txt) - targetDate);
-    const currDiff = Math.abs(new Date(curr.dt_txt) - targetDate);
-    return currDiff < prevDiff ? curr : prev;
-  });
-
-  const tempF = closest.main.temp;
-  const humidity = closest.main.humidity;
-  const windSpeed = closest.wind.speed;
-  const windDir = degToCompass(closest.wind.deg);
-  const pressureHpa = closest.main.pressure;
-  const pressureInHg = (pressureHpa * 0.02953).toFixed(2);
-  const conditions = closest.weather[0]?.description || "N/A";
-
-  return `Forecast for ${closest.dt_txt}: Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
-}
-
 function degToCompass(deg) {
   const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
   return directions[Math.round(deg / 45) % 8];
@@ -278,6 +240,7 @@ function degToCompass(deg) {
   </script>
 </body>
 </html>
+
 
 
 
