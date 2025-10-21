@@ -101,17 +101,26 @@
     }
 
 
-    async function getMoonData() {
-      try {
-        const url = `https://api.weatherapi.com/v1/astronomy.json?key=3be174ed1bae4175b8c204412252110&q=28.0206,-97.0544`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!data.astronomy) return "Moon data unavailable.";
-        return `Moon Phase: ${data.astronomy.astro.moon_phase}`;
-      } catch {
-        return "Moon data unavailable.";
-      }
-    }
+
+async function getMoonData() {
+  try {
+    const url = `https://api.weatherapi.com/v1/astronomy.json?key=3be174ed1bae4175b8c204412252110&q=28.0206,-97.0544`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.astronomy) return { phase: "Unavailable", rise: "-", set: "-", illum: "-" };
+
+    const astro = data.astronomy.astro;
+    return {
+      phase: astro.moon_phase,
+      rise: astro.moonrise,
+      set: astro.moonset,
+      illum: astro.moon_illumination + "%"
+    };
+  } catch {
+    return { phase: "Error", rise: "-", set: "-", illum: "-" };
+  }
+}
+
 
     
     async function getTideData() {
@@ -138,29 +147,24 @@
       return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
     }
 
-    /*
-    async function updateLiveData() {
-      try {
-        weatherInfoEl.textContent = await getWeatherData();
-        tideInfoEl.textContent = await getTideData();
-      } catch {
-        weatherInfoEl.textContent = "Error loading weather.";
-        tideInfoEl.textContent = "Error loading tide data.";
+
+      async function updateLiveData() {
+        try {
+          weatherInfoEl.textContent = await getWeatherData();
+          tideInfoEl.textContent = await getTideData();
+      
+          const moon = await getMoonData();
+          document.getElementById('moon-info').textContent = `Moon Phase: ${moon.phase}`;
+          document.getElementById('moonrise-info').textContent = `Moonrise: ${moon.rise}`;
+          document.getElementById('moonset-info').textContent = `Moonset: ${moon.set}`;
+          document.getElementById('moonlight-info').textContent = `Illumination: ${moon.illum}`;
+        } catch {
+          weatherInfoEl.textContent = "Error loading weather.";
+          tideInfoEl.textContent = "Error loading tide data.";
+          document.getElementById('moon-info').textContent = "Error loading moon data.";
+        }
       }
-    }
-    */
-    
-    async function updateLiveData() {
-      try {
-        weatherInfoEl.textContent = await getWeatherData();
-        tideInfoEl.textContent = await getTideData();
-        document.getElementById('moon-info').textContent = await getMoonData(); // ✅ Added
-      } catch {
-        weatherInfoEl.textContent = "Error loading weather.";
-        tideInfoEl.textContent = "Error loading tide data.";
-        document.getElementById('moon-info').textContent = "Error loading moon data.";
-      }
-    }
+
 
 
     // Initial load
@@ -211,6 +215,7 @@
   </script>
 </body>
 </html>
+
 
 
 
