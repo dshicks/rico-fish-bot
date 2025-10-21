@@ -74,6 +74,7 @@
       <strong>Live Conditions:</strong>
       <p id="weather-info">Loading weather...</p>
       <p id="tide-info">Loading tide data...</p>
+      <p id="moon-info">Loading moon data...</p> <!-- ✅ Added -->
     </div>
   </section>
 
@@ -99,6 +100,20 @@
       return `${y}${m}${d}`;
     }
 
+
+    async function getMoonData() {
+      try {
+        const url = `https://api.weatherapi.com/v1/astronomy.json?key=3be174ed1bae4175b8c204412252110&q=28.0206,-97.0544`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.astronomy) return "Moon data unavailable.";
+        return `Moon Phase: ${data.astronomy.astro.moon_phase}`;
+      } catch {
+        return "Moon data unavailable.";
+      }
+    }
+
+    
     async function getTideData() {
       const today = new Date();
       const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -123,6 +138,7 @@
       return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
     }
 
+    /*
     async function updateLiveData() {
       try {
         weatherInfoEl.textContent = await getWeatherData();
@@ -132,6 +148,20 @@
         tideInfoEl.textContent = "Error loading tide data.";
       }
     }
+    */
+    
+    async function updateLiveData() {
+      try {
+        weatherInfoEl.textContent = await getWeatherData();
+        tideInfoEl.textContent = await getTideData();
+        document.getElementById('moon-info').textContent = await getMoonData(); // ✅ Added
+      } catch {
+        weatherInfoEl.textContent = "Error loading weather.";
+        tideInfoEl.textContent = "Error loading tide data.";
+        document.getElementById('moon-info').textContent = "Error loading moon data.";
+      }
+    }
+
 
     // Initial load
     updateLiveData();
@@ -181,6 +211,7 @@
   </script>
 </body>
 </html>
+
 
 
 
