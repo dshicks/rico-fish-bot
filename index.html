@@ -145,16 +145,6 @@ async function getMoonData() {
     }
 
     /*
-    async function getWeatherData() {
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.cod !== 200 || !data.main) return "Weather data unavailable.";
-      return `Temp: ${data.main.temp}°F, Humidity: ${data.main.humidity}%, Wind: ${data.wind.speed} mph, Conditions: ${data.weather[0]?.description}`;
-    }
-    */
-
-    
 async function getWeatherData() {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
   const res = await fetch(url);
@@ -171,7 +161,37 @@ async function getWeatherData() {
   const pressureInHg = (pressureHpa * 0.02953).toFixed(2); // Convert to inHg
 
   return `Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph, Conditions: ${conditions}`;
+}*/
+
+    
+async function getWeatherData() {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data.cod !== 200 || !data.main) return "Weather data unavailable.";
+
+  const tempF = data.main.temp;
+  const humidity = data.main.humidity;
+  const windSpeed = data.wind.speed;
+  const windDeg = data.wind.deg; // degrees
+  const conditions = data.weather[0]?.description || "N/A";
+  const pressureHpa = data.main.pressure;
+  const pressureInHg = (pressureHpa * 0.02953).toFixed(2);
+
+  // Convert degrees to compass direction
+  const windDir = degToCompass(windDeg);
+
+  return `Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
 }
+
+// Helper function
+function degToCompass(deg) {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const index = Math.round(deg / 45) % 8;
+  return directions[index];
+}
+
 
       async function updateLiveData() {
         try {
@@ -241,6 +261,7 @@ async function getWeatherData() {
   </script>
 </body>
 </html>
+
 
 
 
