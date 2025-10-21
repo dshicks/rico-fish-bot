@@ -121,6 +121,7 @@ window.onload = () => {
     loadPromptHistory();
     loadChatHistory();
     loadPromptsJson(); // load viewer on restore
+    loadSentiment();
   }
 };
 
@@ -153,6 +154,22 @@ function showAdminContent() {
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('admin-content').style.display = 'block';
 }
+
+  
+async function loadSentiment() {
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/sentiment`, {
+      headers: { 'Authorization': token }
+    });
+    const data = await res.json();
+    if (data.sentiment) {
+      document.getElementById('sentiment-select').value = data.sentiment;
+    }
+  } catch (e) {
+    console.error('Failed to load sentiment:', e);
+  }
+}
+
 
 function logout() {
   localStorage.removeItem('adminToken');
