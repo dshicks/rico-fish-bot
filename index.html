@@ -85,13 +85,22 @@
         const data = await response.json();
         const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
 
+        // ✅ Show LLM response in chat
+        updateLastBotMessage(reply);
+        
+        // ✅ Show raw forecast data in Forecast section
+        document.getElementById('forecast-info').innerHTML = data.forecastData
+          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
+          : "Forecast unavailable.";
+
+        /*
         updateLastBotMessage(reply);
         document.getElementById('forecast-info').textContent = reply;
       } catch (error) {
         console.error(error);
         updateLastBotMessage("⚠️ Error fetching data or connecting to backend.");
         document.getElementById('forecast-info').textContent = "Error loading forecast.";
-      }
+      }*/
     });
 
     function appendMessage(sender, text, className) {
@@ -111,6 +120,7 @@
   </script>
 </body>
 </html
+
 
 
 
