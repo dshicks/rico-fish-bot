@@ -381,12 +381,13 @@ if (clearPromptsBtn) {
 }
 
 /* ✅ Clear Chat History Button Wiring */
+
 const clearChatBtn = document.getElementById('clear-chat-btn');
 if (clearChatBtn) {
   clearChatBtn.addEventListener('click', async () => {
     if (!confirm('This will delete all user chat history. Continue?')) return;
     try {
-      const res = await fetch(`${BASE_URL}/api/history/clear`, {
+      const res = await fetch(`${BASE_URL}/api/admin/history/clear`, {
         method: 'POST',
         headers: { 'Authorization': token }
       });
@@ -402,6 +403,7 @@ if (clearChatBtn) {
     }
   });
 }
+
 </script>
 </body>
 </html>
