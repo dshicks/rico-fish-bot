@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +56,7 @@
     </form>
 
     <div id="live-data">
-      <strong>Forecast:</strong>
+      <strong>Full 5-Day Forecast:</strong>
       <div id="forecast-info">No forecast yet.</div>
     </div>
   </section>
@@ -90,10 +89,10 @@
         // ✅ Show LLM response in chat
         updateLastBotMessage(reply);
 
-        // ✅ Show raw forecast data in Forecast section
+        // ✅ Show full forecast list in Forecast section
         document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
           ? data.forecastData.map(item => `<p>${item}</p>`).join("")
-          : "<p>Forecast unavailable.</p>";
+          : "<p>No forecast available.</p>";
       } catch (error) {
         console.error(error);
         updateLastBotMessage("⚠️ Error fetching data or connecting to backend.");
@@ -118,9 +117,6 @@
   </script>
 </body>
 </html>
-
-
-
 
 
 
