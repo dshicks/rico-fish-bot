@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,6 +38,7 @@
     input, button { font-size: 1em; }
     #live-data { margin-top: 15px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
     #live-data strong { display: block; margin-bottom: 6px; }
+    #forecast-info p { margin: 4px 0; }
   </style>
 </head>
 <body>
@@ -56,7 +58,7 @@
 
     <div id="live-data">
       <strong>Forecast:</strong>
-      <p id="forecast-info">No forecast yet.</p>
+      <div id="forecast-info">No forecast yet.</div>
     </div>
   </section>
 
@@ -73,7 +75,7 @@
       appendMessage("You", message, "user-msg");
       userInput.value = "";
       appendMessage("Rico Fish Bot", "Gathering live data and forecast...", "bot-msg");
-      document.getElementById('forecast-info').textContent = "Loading combined forecast...";
+      document.getElementById('forecast-info').textContent = "Loading forecast data...";
 
       try {
         const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
@@ -83,24 +85,20 @@
         });
 
         const data = await response.json();
-        const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
+        const reply = data.llmReply || "⚠️ No response from server.";
 
         // ✅ Show LLM response in chat
         updateLastBotMessage(reply);
-        
-        // ✅ Show raw forecast data in Forecast section
-        document.getElementById('forecast-info').innerHTML = data.forecastData
-          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
-          : "Forecast unavailable.";
 
-        /*
-        updateLastBotMessage(reply);
-        document.getElementById('forecast-info').textContent = reply;
+        // ✅ Show raw forecast data in Forecast section
+        document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
+          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
+          : "<p>Forecast unavailable.</p>";
       } catch (error) {
         console.error(error);
         updateLastBotMessage("⚠️ Error fetching data or connecting to backend.");
         document.getElementById('forecast-info').textContent = "Error loading forecast.";
-      }*/
+      }
     });
 
     function appendMessage(sender, text, className) {
@@ -119,7 +117,8 @@
     }
   </script>
 </body>
-</html
+</html>
+
 
 
 
