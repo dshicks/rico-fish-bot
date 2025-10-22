@@ -172,6 +172,20 @@ async function getWeatherData() {
 }
 
 
+function convertToLocal(forecastString) {
+  const match = forecastString.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
+  if (!match) return forecastString;
+  const utcDate = new Date(match[1] + ' UTC');
+  const localTime = utcDate.toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
+    hour: 'numeric',
+    minute: '2-digit',
+    month: 'short',
+    day: 'numeric'
+  });
+  return forecastString.replace(match[1], localTime);
+}
+
     
 // Helper function
 function degToCompass(deg) {
@@ -249,8 +263,9 @@ chatForm.addEventListener('submit', async function(e) {
     const forecastInfo = await getForecastData(targetDate);
 
     // ✅ Update Live Conditions with forecast
-    document.getElementById('forecast-info').textContent = forecastInfo;
-
+    //document.getElementById('forecast-info').textContent = forecastInfo;
+    document.getElementById('forecast-info').textContent = convertToLocal(forecastInfo);
+    
     // Include forecast in LLM prompt
     const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
       method: "POST",
@@ -287,6 +302,7 @@ chatForm.addEventListener('submit', async function(e) {
   </script>
 </body>
 </html>
+
 
 
 
