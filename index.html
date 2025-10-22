@@ -216,7 +216,18 @@ async function getForecastData(targetDate) {
   const pressureInHg = (pressureHpa * 0.02953).toFixed(2);
   const conditions = closest.weather[0]?.description || "N/A";
 
-  return `Forecast for ${closest.dt_txt}: Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
+  
+  const localTime = new Date(closest.dt_txt + " UTC").toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    day: "numeric"
+  });
+  
+  return `Forecast for ${localTime}: Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
+
+  //return `Forecast for ${closest.dt_txt}: Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
 }
 
 
@@ -302,6 +313,7 @@ chatForm.addEventListener('submit', async function(e) {
   </script>
 </body>
 </html>
+
 
 
 
