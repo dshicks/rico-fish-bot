@@ -5,12 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rico Fish Bot</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f8ff; margin: 0; color: #222; }
-    header { position: relative; background: url('sunrise-over-redfish-bay.jpg') center/cover no-repeat; padding: 80px 20px; text-align: center; color: #fff; }
-    header::before { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.4); }
-    header h1, header p { position: relative; text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7); }
-    header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
-    header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      color: #222;
+    }
+
+    header {
+      position: relative;
+      background: url('sunrise-over-redfish-bay.jpg') center/cover no-repeat;
+      padding: 80px 20px;
+      text-align: center;
+      color: #fff;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    header h1,
+    header p {
+      position: relative;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    }
+
+    header h1 {
+      font-size: 3em;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.6em;
+      font-weight: 400;
+      margin-bottom: 20px;
+    }
+
     section { padding: 40px 20px; max-width: 800px; margin: auto; }
     #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
     .user-msg { background: #d1e7ff; text-align: right; }
@@ -18,7 +52,6 @@
     input, button { font-size: 1em; }
     #live-data { margin-top: 15px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
     #live-data strong { display: block; margin-bottom: 6px; }
-    #forecast-list { max-height:200px; overflow-y:auto; font-size:0.9em; background:#fff; border:1px solid #ccc; padding:10px; border-radius:8px; }
   </style>
 </head>
 <body>
@@ -32,58 +65,210 @@
     <h2>🎣 Chat with Rico Fish Bot</h2>
     <div id="chat-box" style="background:#f9f9f9; border:1px solid #ccc; padding:15px; border-radius:10px; max-height:300px; overflow-y:auto;"></div>
     <form id="chat-form" style="margin-top:10px;">
-      <input type="text" id="user-input" value="I want to fish tomorrow at 11:00AM" style="width:75%; padding:10px;" />
+      <input type="text" id="user-input" value="I want to fish tomorrow at 6:00AM" style="width:75%; padding:10px;" />
       <button type="submit" style="padding:10px;">Send</button>
     </form>
 
-    <div id="live-data">
-      <strong>Live Conditions:</strong>
-      <p id="weather-info">Loading weather...</p>
-      <p id="tide-info">Loading tide data...</p>
-      <p id="moon-info">Loading moon data...</p>
-      <p id="moonrise-info"></p>
-      <p id="moonset-info"></p>
-      <p id="moonlight-info"></p>
-      <hr>
-      <strong>Full Forecast (Next 5 Days):</strong>
-      <div id="forecast-list">Loading forecast...</div>
-    </div>
+    <!-- ✅ Added Live Data Section -->
+
+
+<div id="live-data">
+  <strong>Live Conditions:</strong>
+  <p id="weather-info">Loading weather...</p>
+  <p id="tide-info">Loading tide data...</p>
+  <p id="moon-info">Loading moon data...</p>
+  <p id="moonrise-info"></p>
+  <p id="moonset-info"></p>
+  <p id="moonlight-info"></p>
+  <hr>
+  <strong>Forecast:</strong>
+  <p id="forecast-info">No forecast yet.</p>
+</div>
+
+
   </section>
 
   <script>
     const chatBox = document.getElementById('chat-box');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
+    const weatherInfoEl = document.getElementById('weather-info');
+    const tideInfoEl = document.getElementById('tide-info');
 
-    chatForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const message = userInput.value.trim();
-      if (!message) return;
+    const WEATHER_API_KEY = "1e24ea016ffb7aaf0846b9dd682a2698";
+    const NOAA_STATION = "8774770";
+    const NOAA_DATUM = "MLLW";
+    const NOAA_UNITS = "english";
+    const NOAA_TZ = "lst_ldt";
+    const NOAA_PRODUCT = "predictions";
+    const NOAA_INTERVAL = "hilo";
 
-      appendMessage('You', message, 'user-msg');
-      userInput.value = '';
-      appendMessage('Rico Fish Bot', 'Thinking...', 'bot-msg');
+    function yyyymmdd(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}${m}${d}`;
+    }
 
-      try {
-        const response = await fetch('https://rico-fish-bot-backend.onrender.com/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
-        });
 
-        const data = await response.json();
-        const reply = data?.choices?.[0]?.message?.content || '⚠️ No response from server.';
-        updateLastBotMessage(reply);
 
-        // ✅ Display full forecast with local time conversion
-        if (data.forecast) {
-          document.getElementById('forecast-list').innerHTML = data.forecast.map(item => `<p>${convertToLocal(item)}</p>`).join('');
+async function getMoonData() {
+  try {
+    const url = `https://api.weatherapi.com/v1/astronomy.json?key=3be174ed1bae4175b8c204412252110&q=28.0206,-97.0544`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.astronomy) return { phase: "Unavailable", rise: "-", set: "-", illum: "-" };
+
+    const astro = data.astronomy.astro;
+    return {
+      phase: astro.moon_phase,
+      rise: astro.moonrise,
+      set: astro.moonset,
+      illum: astro.moon_illumination + "%"
+    };
+  } catch {
+    return { phase: "Error", rise: "-", set: "-", illum: "-" };
+  }
+}
+
+
+    
+    async function getTideData() {
+      const today = new Date();
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+      const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?station=${NOAA_STATION}&product=${NOAA_PRODUCT}&datum=${NOAA_DATUM}&units=${NOAA_UNITS}&time_zone=${NOAA_TZ}&format=json&interval=${NOAA_INTERVAL}&begin_date=${yyyymmdd(today)}&end_date=${yyyymmdd(tomorrow)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const preds = data?.predictions || [];
+      if (!preds.length) return "Tide data unavailable.";
+      return preds.slice(0, 4).map(p => {
+        const dt = new Date(p.t);
+        const time = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        const type = p.type === "H" ? "High" : "Low";
+        return `${type} ${time} ${parseFloat(p.v).toFixed(2)}ft`;
+      }).join("; ");
+    } 
+
+
+async function getWeatherData() {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data.cod !== 200 || !data.main) return "Weather data unavailable.";
+
+  const tempF = data.main.temp;
+  const humidity = data.main.humidity;
+  const windSpeed = data.wind.speed;
+  const windDeg = data.wind.deg; // degrees
+  const conditions = data.weather[0]?.description || "N/A";
+  const pressureHpa = data.main.pressure;
+  const pressureInHg = (pressureHpa * 0.02953).toFixed(2);
+
+  // Convert degrees to compass direction
+  const windDir = degToCompass(windDeg);
+
+  return `Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
+}
+
+
+    
+// Helper function
+function degToCompass(deg) {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return directions[Math.round(deg / 45) % 8];
+}
+
+    
+async function getForecastData(targetDate) {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=28.0206&lon=-97.0544&appid=${WEATHER_API_KEY}&units=imperial`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!data.list) return "Forecast unavailable.";
+
+  // Find closest forecast to targetDate
+  let closest = data.list.reduce((prev, curr) => {
+    const prevDiff = Math.abs(new Date(prev.dt_txt) - targetDate);
+    const currDiff = Math.abs(new Date(curr.dt_txt) - targetDate);
+    return currDiff < prevDiff ? curr : prev;
+  });
+
+  const tempF = closest.main.temp;
+  const humidity = closest.main.humidity;
+  const windSpeed = closest.wind.speed;
+  const windDir = degToCompass(closest.wind.deg);
+  const pressureHpa = closest.main.pressure;
+  const pressureInHg = (pressureHpa * 0.02953).toFixed(2);
+  const conditions = closest.weather[0]?.description || "N/A";
+
+  return `Forecast for ${closest.dt_txt}: Temp: ${tempF}°F, Humidity: ${humidity}%, Pressure: ${pressureHpa} hPa (${pressureInHg} inHg), Wind: ${windSpeed} mph (${windDir}), Conditions: ${conditions}`;
+}
+
+
+      async function updateLiveData() {
+        try {
+          weatherInfoEl.textContent = await getWeatherData();
+          tideInfoEl.textContent = await getTideData();
+      
+          const moon = await getMoonData();
+          document.getElementById('moon-info').textContent = `Moon Phase: ${moon.phase}`;
+          document.getElementById('moonrise-info').textContent = `Moonrise: ${moon.rise}`;
+          document.getElementById('moonset-info').textContent = `Moonset: ${moon.set}`;
+          document.getElementById('moonlight-info').textContent = `Illumination: ${moon.illum}`;
+        } catch (err) {
+          console.error(err);
+          weatherInfoEl.textContent = "Error loading weather.";
+          tideInfoEl.textContent = "Error loading tide data.";
+          document.getElementById('moon-info').textContent = "Error loading moon data.";
         }
-      } catch (error) {
-        console.error(error);
-        updateLastBotMessage('⚠️ Error connecting to backend.');
       }
+
+
+
+    // Initial load
+    updateLiveData();
+
+
+    
+chatForm.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const message = userInput.value.trim();
+  if (!message) return;
+
+  appendMessage("You", message, "user-msg");
+  userInput.value = "";
+  appendMessage("Rico Fish Bot", "Fetching weather and tide data...", "bot-msg");
+
+  try {
+    const [weatherInfo, tideInfo] = await Promise.all([getWeatherData(), getTideData()]);
+    appendMessage("Rico Fish Bot", "Data loaded. Thinking...", "bot-msg");
+
+    // Determine target date (basic logic: tomorrow if mentioned)
+    const targetDate = /tomorrow/i.test(message) ? new Date(Date.now() + 86400000) : new Date();
+    const forecastInfo = await getForecastData(targetDate);
+
+    // ✅ Update Live Conditions with forecast
+    document.getElementById('forecast-info').textContent = forecastInfo;
+
+    // Include forecast in LLM prompt
+    const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `${message} (Current Weather: ${weatherInfo}) (Forecast: ${forecastInfo}) (Tide: ${tideInfo})`
+      })
     });
+
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content || "⚠️ No response from server.";
+    updateLastBotMessage(reply);
+  } catch (error) {
+    console.error(error);
+    updateLastBotMessage("⚠️ Error fetching data or connecting to backend.");
+  }
+});
+
 
     function appendMessage(sender, text, className) {
       const msg = document.createElement('p');
@@ -94,29 +279,15 @@
     }
 
     function updateLastBotMessage(text) {
-      const botMessages = chatBox.querySelectorAll('p.bot-msg');
+      const botMessages = chatBox.querySelectorAll("p.bot-msg");
       if (botMessages.length > 0) {
         botMessages[botMessages.length - 1].innerHTML = `<strong>Rico Fish Bot:</strong> ${text}`;
       }
     }
-
-    // ✅ Convert UTC time in forecast string to local time
-    function convertToLocal(forecastString) {
-      const match = forecastString.match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
-      if (!match) return forecastString;
-      const utcDate = new Date(match[1] + ' UTC');
-      const localTime = utcDate.toLocaleString('en-US', {
-        timeZone: 'America/Chicago',
-        hour: 'numeric',
-        minute: '2-digit',
-        month: 'short',
-        day: 'numeric'
-      });
-      return forecastString.replace(match[1], localTime);
-    }
   </script>
 </body>
 </html>
+
 
 
 
