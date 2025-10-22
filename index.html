@@ -90,9 +90,29 @@
         updateLastBotMessage(reply);
 
         // ✅ Show full forecast list in Forecast section
+        /*
         document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
           ? data.forecastData.map(item => `<p>${item}</p>`).join("")
           : "<p>No forecast available.</p>";
+          */
+        
+        document.getElementById('forecast-info').innerHTML =
+          data.forecastData && data.forecastData.length
+            ? `
+              <h3>Current Weather</h3>
+              <p>${data.currentWeather || "N/A"}</p>
+              
+              <h3>Tide Info</h3>
+              <p>${data.tideInfo || "N/A"}</p>
+              
+              <h3>Moon Info</h3>
+              <p>${data.moonInfo || "N/A"}</p>
+              
+              <h3>Forecast</h3>
+              ${data.forecastData.map(item => `<p>${item}</p>`).join("")}
+            `
+            : "<p>No forecast available.</p>";
+
       } catch (error) {
         console.error(error);
         updateLastBotMessage("⚠️ Error fetching data or connecting to backend.");
@@ -117,6 +137,7 @@
   </script>
 </body>
 </html>
+
 
 
 
