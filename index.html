@@ -38,6 +38,9 @@
     #live-data { margin-top: 15px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
     #live-data strong { display: block; margin-bottom: 6px; }
     #forecast-info p { margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #f2f2f2; }
   </style>
 </head>
 <body>
@@ -86,16 +89,8 @@
         const data = await response.json();
         const reply = data.llmReply || "⚠️ No response from server.";
 
-        // ✅ Show LLM response in chat
         updateLastBotMessage(reply);
 
-        // ✅ Show full forecast list in Forecast section
-        /*
-        document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
-          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
-          : "<p>No forecast available.</p>";
-          */
-        
         document.getElementById('forecast-info').innerHTML =
           data.forecastData && data.forecastData.length
             ? `
@@ -116,8 +111,8 @@
                     </thead>
                     <tbody>
                       ${data.tideInfo.split(",").map(row => {
-                        const parts = row.trim().split(" ");
-                        // Expected: [date, level, time, am/pm, size]
+                        const parts = row.trim().split(/\s+/);
+                        if (parts.length < 5) return ""; // Skip malformed rows
                         const date = parts[0];
                         const level = parts[1];
                         const time = parts[2] + " " + parts[3];
@@ -135,7 +130,6 @@
                   </table>
                 `
                 : "<p>N/A</p>"}
-              
               
               <h3>Moon Info</h3>
               <p>${data.moonInfo || "N/A"}</p>
@@ -169,11 +163,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
 
 
 
