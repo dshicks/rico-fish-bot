@@ -13,35 +13,23 @@
     }
     
 
-    
-
-<header>
-  <img src="ricobot.png" alt="Rico Fish Bot" />
-  <h1>Rico Fish Bot</h1>
-  <p>Your AI Fishing Guide for Rockport, TX</p>
-  <p>A Subscription Service</p>
-</header>
-
-
-header::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4); /* Keep overlay for text readability */
-}
-
-header img {
-  position: relative;
-  max-width: 180px; /* Adjust size of ricobot */
-  display: block;
-  margin: 0 auto 20px; /* Center image above text */
-  z-index: 2;
-}
-header h1, header p {
-  position: relative;
-  z-index: 2;
-  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
-}
+    header {
+      position: relative;
+      background: url('ricobot.png') center/cover no-repeat;
+      padding: 80px 20px;
+      text-align: center;
+      color: #fff;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+    }
+    header h1, header p {
+      position: relative;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    }
 
     header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
     header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
@@ -152,6 +140,7 @@ header h1, header p {
   </script>
 </body>
 </html>
+
 
 
 
