@@ -12,13 +12,16 @@
       color: #222;
     }
     
+
     header {
       position: relative;
-      background: url('ricobot.png') center/cover no-repeat;
-      padding: 80px 20px;
+      background: url('ricobot.png') center top no-repeat;
+      background-size: contain; /* Show full image without cropping */
+      padding: 40px 20px; /* Reduce padding so image fits better */
       text-align: center;
       color: #fff;
     }
+
 
     header::before {
       content: "";
@@ -139,6 +142,7 @@
   </script>
 </body>
 </html>
+
 
 
 
