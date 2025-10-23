@@ -12,42 +12,32 @@
       color: #222;
     }
     
-  /*
-    
-    header {
-      position: relative;
-      background: url('herobanner.png') center/cover no-repeat;
-      height: 600px; 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-min-height: 400px;
-    */
-    
-
 
     header {
       position: relative;
-      background: url('herobanner.png') center top no-repeat;
-      background-size: contain; /* Show full image without cropping */
-      height: auto; /* Let height adjust to image */
-      min-height: 400px;
+      background: url('herobanner.png') center center no-repeat;
+      background-size: cover; /* Fill entire container */
+      height: 60vh; /* Scales with viewport height */
+      min-height: 400px; /* Ensures visibility on large screens */
     }
+
+    /* Mobile adjustments */
     @media (max-width: 768px) {
       header {
-        height: 40vh; /* Adjust for mobile */
+        height: 40vh; /* Reduce height for smaller screens */
         min-height: 300px;
+        background-position: top center; /* Keep key part of image visible */
       }
     }
-
-
+    
+    /* Optional overlay for text readability */
     header::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.3); /* Optional: subtle overlay for contrast */
+      background: rgba(0, 0, 0, 0.3); /* Subtle overlay */
     }
+
     header h1, header p {
       display: none; /* Hide text since it's in the image */
     }
@@ -162,6 +152,7 @@ min-height: 400px;
   </script>
 </body>
 </html>
+
 
 
 
