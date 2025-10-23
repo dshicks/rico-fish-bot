@@ -13,14 +13,14 @@
     }
 
     
-
     header {
       position: relative;
       background: url('herobanner.png') top center no-repeat;
-      background-size: cover; /* Fill entire container */
-      height: 60vh; /* Scales with viewport height */
-      min-height: 400px; /* Ensures visibility on large screens */
+      background-size: contain; /* Show full image without cropping */
+      height: auto; /* Let header fit the image height */
+      min-height: 400px;
     }
+
 
     /* Mobile adjustments */
     @media (max-width: 768px) {
@@ -154,6 +154,7 @@
   </script>
 </body>
 </html>
+
 
 
 
