@@ -30,14 +30,16 @@
     }
     header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
     header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
-    section { padding: 40px 20px; max-width: 800px; margin: auto; }
+    section { padding: 40px 20px; max-width: 900px; margin: auto; }
     #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
     .user-msg { background: #d1e7ff; text-align: right; }
     .bot-msg { background: #e6f7ff; text-align: left; }
     input, button { font-size: 1em; }
-    #live-data { margin-top: 15px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 8px; }
-    #live-data strong { display: block; margin-bottom: 6px; }
-    #forecast-info p { margin: 4px 0; }
+    #live-data { margin-top: 20px; font-size: 0.95em; color: #333; background: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #f2f2f2; }
+    h3 { margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -85,33 +87,74 @@
 
         const data = await response.json();
         const reply = data.llmReply || "⚠️ No response from server.";
-
-        // ✅ Show LLM response in chat
         updateLastBotMessage(reply);
 
-        // ✅ Show full forecast list in Forecast section
-        /*
-        document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
-          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
-          : "<p>No forecast available.</p>";
-          */
-        
-        document.getElementById('forecast-info').innerHTML =
-          data.forecastData && data.forecastData.length
-            ? `
-              <h3>Current Weather</h3>
-              <p>${data.currentWeather || "N/A"}</p>
-              
-              <h3>Tide Info</h3>
-              <p>${data.tideInfo || "N/A"}</p>
-              
-              <h3>Moon Info</h3>
-              <p>${data.moonInfo || "N/A"}</p>
-              
-              <h3>Forecast</h3>
-              ${data.forecastData.map(item => `<p>${item}</p>`).join("")}
-            `
-            : "<p>No forecast available.</p>";
+        // ✅ Render separate tables for Weather, Tide, and Moon
+        let html = "";
+
+        // Weather Forecast Table
+        if (data.forecastData && data.forecastData.length) {
+          html += `
+            <h3>Weather Forecast</h3>
+            <table>
+              <thead>
+                <tr><th>Date/Time</th><th>Details</th></tr>
+              </thead>
+              <tbody>
+                ${data.forecastData.map(item => {
+                  const parts = item.split(":");
+                  const dateTime = parts[0];
+                  const details = parts.slice(1).join(":");
+                  return `<tr><td>${dateTime}</td><td>${details}</td></tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+
+        // Tide Forecast Table
+        if (data.tideForecast && data.tideForecast.length) {
+          html += `
+            <h3>Tide Forecast (5 Days)</h3>
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Type</th><th>Time</th><th>Height (ft)</th></tr>
+              </thead>
+              <tbody>
+                ${data.tideForecast.map(item => {
+                  const parts = item.split(" ");
+                  const date = parts[0];
+                  const type = parts[1];
+                  const time = parts[2] + " " + parts[3];
+                  const height = parts[4];
+                  return `<tr><td>${date}</td><td>${type}</td><td>${time}</td><td>${height}</td></tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+
+        // Moon & Sun Forecast Table
+        if (data.moonForecast && data.moonForecast.length) {
+          html += `
+            <h3>Moon & Sun Forecast (5 Days)</h3>
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Details</th></tr>
+              </thead>
+              <tbody>
+                ${data.moonForecast.map(item => {
+                  const parts = item.split(": ");
+                  const date = parts[0];
+                  const details = parts.slice(1).join(": ");
+                  return `<tr><td>${date}</td><td>${details}</td></tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+
+        document.getElementById('forecast-info').innerHTML = html || "<p>No forecast available.</p>";
 
       } catch (error) {
         console.error(error);
@@ -137,7 +180,6 @@
   </script>
 </body>
 </html>
-
 
 
 
