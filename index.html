@@ -12,16 +12,30 @@
       color: #222;
     }
     
-
-
+  /*
+    
     header {
       position: relative;
       background: url('herobanner.png') center/cover no-repeat;
-      height: 600px; /* Adjust height for full banner visibility */
+      height: 600px; 
       display: flex;
       align-items: center;
       justify-content: center;
     }
+
+    */
+    
+    header {
+      position: relative;
+      background: url('herobanner.png') center top no-repeat;
+      background-size: contain; /* Shows full image */
+      background-color: #f0f8ff; /* Fallback color for empty space */
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     header::before {
       content: "";
       position: absolute;
@@ -142,6 +156,7 @@
   </script>
 </body>
 </html>
+
 
 
 
