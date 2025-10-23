@@ -33,13 +33,19 @@
     */
     
 
+
     header {
       position: relative;
-      background: url('herobanner2.png') top center no-repeat;
-      background-size: contain; 
-      height: 60vh; /* Responsive height */
-      min-height: 400px;
+      width: 100%;
+      height: 100vh; /* Full viewport height */
+      background: url('herobanner.png') center center / cover no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff; /* Text color for overlay content */
+      overflow: hidden;
     }
+
     @media (max-width: 768px) {
       header {
         height: 40vh;
@@ -163,6 +169,7 @@
   </script>
 </body>
 </html>
+
 
 
 
