@@ -25,16 +25,20 @@
 
     */
     
+
     header {
       position: relative;
-      background: url('herobanner.png') center top no-repeat;
-      background-size: contain; /* Shows full image */
-      background-color: #f0f8ff; /* Fallback color for empty space */
-      height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: url('herobanner2.png') center/cover no-repeat;
+      height: 60vh; /* Responsive height */
+      min-height: 400px;
     }
+    @media (max-width: 768px) {
+      header {
+        height: 40vh; /* Adjust for mobile */
+        min-height: 300px;
+      }
+    }
+
 
     header::before {
       content: "";
@@ -156,6 +160,7 @@
   </script>
 </body>
 </html>
+
 
 
 
