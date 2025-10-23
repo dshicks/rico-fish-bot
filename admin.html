@@ -19,18 +19,28 @@
   .btn:active { transform: translateY(1px); }
 
   
-  .header-image {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 200px; /* adjust as needed */
-    height: auto;
-  }
+
+.header-images {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px; /* space between images */
+}
+
+.header-image {
+  width: 200px; /* same size for both */
+  height: auto;
+}
+
 
 </style>
 </head>
 <body>
-<img src="ricobot2.png" alt="Rico Bot" class="header-image">
+  <div class="header-images">
+    <img src="ricobot2.png" alt="Rico Bot" class="header-image">
+    <img src="ricobot3.png" alt="Rico Bot 2" class="header-image">
+  </div>
 <h1>Admin Panel</h1>
 
 <!-- Login Section -->
