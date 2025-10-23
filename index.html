@@ -13,23 +13,25 @@
     }
     
 
+
     header {
       position: relative;
-      background: url('ricobot.png') center/cover no-repeat;
-      padding: 80px 20px;
-      text-align: center;
-      color: #fff;
+      background: url('herobanner.png') center/cover no-repeat;
+      height: 400px; /* Adjust height for full banner visibility */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     header::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.3); /* Optional: subtle overlay for contrast */
     }
     header h1, header p {
-      position: relative;
-      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+      display: none; /* Hide text since it's in the image */
     }
+
 
     header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
     header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
@@ -140,6 +142,7 @@
   </script>
 </body>
 </html>
+
 
 
 
