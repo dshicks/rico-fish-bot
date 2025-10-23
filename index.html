@@ -26,10 +26,12 @@ min-height: 400px;
     */
     
 
+
     header {
       position: relative;
-      background: url('herobanner.png') center/cover no-repeat;
-      height: 600px; 
+      background: url('herobanner.png') center top no-repeat;
+      background-size: contain; /* Show full image without cropping */
+      height: auto; /* Let height adjust to image */
       min-height: 400px;
     }
     @media (max-width: 768px) {
@@ -160,6 +162,7 @@ min-height: 400px;
   </script>
 </body>
 </html>
+
 
 
 
