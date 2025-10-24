@@ -115,7 +115,13 @@
               ${
                 data.currentWeather && !data.currentWeather.error
                   ? `
-                    <p><strong>Current Time:</strong> ${data.currentWeather.timestamp}</p>
+                    <p><strong>Last Updated:</strong> ${new Date(data.currentWeather.timestamp).toLocaleString("en-US", {
+                      timeZone: "America/Chicago",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      month: "short",
+                      day: "numeric"
+                    })}</p>
                     <p><strong>Temperature:</strong> ${data.currentWeather.temperature}</p>
                     <p><strong>Humidity:</strong> ${data.currentWeather.humidity}</p>
                     <p><strong>Pressure:</strong> ${data.currentWeather.pressure}</p>
@@ -160,6 +166,7 @@
   </script>
 </body>
 </html>
+
 
 
 
