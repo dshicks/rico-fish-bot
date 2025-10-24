@@ -115,6 +115,7 @@
               ${
                 data.currentWeather && !data.currentWeather.error
                   ? `
+                    <p><strong>Current Time:</strong> ${data.currentWeather.timestamp}</p>
                     <p><strong>Temperature:</strong> ${data.currentWeather.temperature}</p>
                     <p><strong>Humidity:</strong> ${data.currentWeather.humidity}</p>
                     <p><strong>Pressure:</strong> ${data.currentWeather.pressure}</p>
@@ -159,6 +160,7 @@
   </script>
 </body>
 </html>
+
 
 
 
