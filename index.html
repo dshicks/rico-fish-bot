@@ -15,9 +15,9 @@
     /* Hero section layout */
     .hero-container {
       display: flex;
-      align-items: center;       /* Align vertically */
-      justify-content: center;   /* Center horizontally */
-      gap: 20px;                 /* Space between images */
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
       padding: 20px;
     }
 
@@ -27,22 +27,22 @@
     }
 
     .hero-banner-img {
-      max-width: 600px;          /* Adjust as needed */
+      max-width: 600px;
       height: auto;
     }
 
     @media (max-width: 768px) {
       .hero-container {
-        flex-direction: column;  /* Stack on mobile */
+        flex-direction: column;
       }
       .hero-side-img,
       .hero-banner-img {
-        max-width: 90%;          /* Scale down on mobile */
+        max-width: 90%;
       }
     }
 
     header h1, header p {
-      display: none; /* Hide text since it's in the image */
+      display: none;
     }
 
     section { padding: 40px 20px; max-width: 800px; margin: auto; }
@@ -112,8 +112,18 @@
           data.forecastData && data.forecastData.length
             ? `
               <h3>Current Weather</h3>
-              <p>${data.currentWeather || "N/A"}</p>
-              
+              ${
+                data.currentWeather && !data.currentWeather.error
+                  ? `
+                    <p><strong>Temperature:</strong> ${data.currentWeather.temperature}</p>
+                    <p><strong>Humidity:</strong> ${data.currentWeather.humidity}</p>
+                    <p><strong>Pressure:</strong> ${data.currentWeather.pressure}</p>
+                    <p><strong>Wind:</strong> ${data.currentWeather.wind}</p>
+                    <p><strong>Conditions:</strong> ${data.currentWeather.conditions}</p>
+                  `
+                  : "<p>N/A</p>"
+              }
+
               <h3>Tide Info</h3>
               <p>${data.tideInfo || "N/A"}</p>
               
@@ -149,6 +159,7 @@
   </script>
 </body>
 </html>
+
 
 
 
