@@ -12,49 +12,40 @@
       color: #222;
     }
 
-    /*
-    header {
-      position: relative;
-      background: url('herobanner.png') top center no-repeat;
-      background-size: contain; 
-      height: auto; 
-      min-height: 400px;
+    /* Hero section layout */
+    .hero-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
 
-
-  
-    @media (max-width: 768px) {
-      header {
-        height: 40vh; 
-        min-height: 300px;
-        background-position: top center; 
-      }
+    .hero-side-img {
+      max-width: 250px; /* Adjust size as needed */
+      height: auto;
+      margin-right: 20px; /* Space between image and banner */
     }
-    */
-    
 
-
-    header {
-      position: relative;
+    .hero-banner {
       background: url('herobanner.png') top center no-repeat;
-      background-size: contain; 
-      height: auto; 
+      background-size: contain;
+      width: 100%;
       min-height: 400px;
     }
 
     @media (max-width: 768px) {
-      header {
-        height: 40vh;
-        min-height: 300px;
-        background-position: top center; /* Keep Rico visible on mobile */
+      .hero-container {
+        flex-direction: column; /* Stack on mobile */
+      }
+      .hero-side-img {
+        margin: 0 0 15px 0;
+        max-width: 180px;
       }
     }
 
-    
     header h1, header p {
       display: none; /* Hide text since it's in the image */
     }
-
 
     header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
     header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
@@ -70,6 +61,10 @@
 </head>
 <body>
   <header>
+    <div class="hero-container">
+      <img src="ricobot11.png" alt="Fishing Scene" class="hero-side-img" />
+      <div class="hero-banner"></div>
+    </div>
     <h1>Rico Fish Bot</h1>
     <p>Your AI Fishing Guide for Rockport, TX</p>
     <p>A Subscription Service</p>
@@ -114,16 +109,8 @@
         const data = await response.json();
         const reply = data.llmReply || "⚠️ No response from server.";
 
-        // ✅ Show LLM response in chat
         updateLastBotMessage(reply);
 
-        // ✅ Show full forecast list in Forecast section
-        /*
-        document.getElementById('forecast-info').innerHTML = data.forecastData && data.forecastData.length
-          ? data.forecastData.map(item => `<p>${item}</p>`).join("")
-          : "<p>No forecast available.</p>";
-          */
-        
         document.getElementById('forecast-info').innerHTML =
           data.forecastData && data.forecastData.length
             ? `
@@ -165,6 +152,7 @@
   </script>
 </body>
 </html>
+
 
 
 
