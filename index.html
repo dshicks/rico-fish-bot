@@ -15,31 +15,29 @@
     /* Hero section layout */
     .hero-container {
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: center;       /* Align vertically */
+      justify-content: center;   /* Center horizontally */
+      gap: 20px;                 /* Space between images */
       padding: 20px;
     }
 
     .hero-side-img {
-      max-width: 250px; /* Adjust size as needed */
+      max-width: 250px;
       height: auto;
-      margin: 0 20px; /* Space on both sides */
     }
 
-    .hero-banner {
-      background: url('herobanner.png') top center no-repeat;
-      background-size: contain;
-      width: 100%;
-      min-height: 400px;
+    .hero-banner-img {
+      max-width: 600px;          /* Adjust as needed */
+      height: auto;
     }
 
     @media (max-width: 768px) {
       .hero-container {
-        flex-direction: column; /* Stack on mobile */
+        flex-direction: column;  /* Stack on mobile */
       }
-      .hero-side-img {
-        margin: 0 0 15px 0;
-        max-width: 180px;
+      .hero-side-img,
+      .hero-banner-img {
+        max-width: 90%;          /* Scale down on mobile */
       }
     }
 
@@ -47,8 +45,6 @@
       display: none; /* Hide text since it's in the image */
     }
 
-    header h1 { font-size: 3em; font-weight: 700; margin-bottom: 10px; }
-    header p { font-size: 1.6em; font-weight: 400; margin-bottom: 20px; }
     section { padding: 40px 20px; max-width: 800px; margin: auto; }
     #chat-box p { padding: 8px; border-radius: 6px; margin: 5px 0; }
     .user-msg { background: #d1e7ff; text-align: right; }
@@ -62,9 +58,9 @@
 <body>
   <header>
     <div class="hero-container">
-      <img src="ricobot11.png" alt="Fishing Scene Left" class="hero-side-img" />
-      <div class="hero-banner"></div>
-      <img src="ricobot6.png" alt="Fishing Scene Right" class="hero-side-img" />
+      <img src="ricobot11.png" alt="Left Image" class="hero-side-img" />
+      <img src="herobanner.png" alt="Hero Banner" class="hero-banner-img" />
+      <img src="ricobot6.png" alt="Right Image" class="hero-side-img" />
     </div>
     <h1>Rico Fish Bot</h1>
     <p>Your AI Fishing Guide for Rockport, TX</p>
