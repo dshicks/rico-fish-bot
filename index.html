@@ -21,24 +21,12 @@
       padding: 20px;
     }
 
-    .hero-side-img {
-      max-width: 250px;
-      height: auto;
-    }
-
-    .hero-banner-img {
-      max-width: 600px;
-      height: auto;
-    }
+    .hero-side-img { max-width: 250px; height: auto; }
+    .hero-banner-img { max-width: 600px; height: auto; }
 
     @media (max-width: 768px) {
-      .hero-container {
-        flex-direction: column;
-      }
-      .hero-side-img,
-      .hero-banner-img {
-        max-width: 90%;
-      }
+      .hero-container { flex-direction: column; }
+      .hero-side-img, .hero-banner-img { max-width: 90%; }
     }
 
     header h1, header p { display: none; }
@@ -129,23 +117,39 @@
                   : "<p>N/A</p>"
               }
 
-
-                  <h3>Tide Info</h3>
-                  ${
-                    data.tideInfo && !data.tideInfo.error
-                      ? Object.entries(data.tideInfo).map(([date, tides]) => `
-                          <div style="margin-bottom:10px;">
-                            <p><strong>${date}</strong></p>
-                            ${tides.map(t => `<p>${t.type} Tide at ${t.time}, Height: ${t.height}</p>`).join("")}
-                          </div>
-                        `).join("")
-                      : "<p>N/A</p>"
-                  }
-
+              <h3>Tide Info</h3>
+              ${
+                data.tideInfo && !data.tideInfo.error
+                  ? Object.entries(data.tideInfo).map(([date, tides]) => `
+                      <div style="margin-bottom:10px;">
+                        <p><strong>${date}</strong></p>
+                        ${tides.map(t => `<p>${t.type} Tide at ${t.time}, Height: ${t.height}</p>`).join("")}
+                      </div>
+                    `).join("")
+                  : "<p>N/A</p>"
+              }
 
               <h3>Moon Info</h3>
-              <p>${data.moonInfo || "N/A"}</p>
-              
+              ${
+                Array.isArray(data.moonInfo) && data.moonInfo.length
+                  ? data.moonInfo.map(item => `
+                      <div style="margin-bottom:10px;">
+                        <p><strong>${item.date}</strong></p>
+                        ${
+                          item.error
+                            ? `<p>${item.error}</p>`
+                            : `
+                              <p>Sunrise: ${item.sunrise}, Sunset: ${item.sunset}</p>
+                              <p>Moon Phase: ${item.moonPhase}</p>
+                              <p>Moonrise: ${item.moonrise}, Moonset: ${item.moonset}</p>
+                              <p>Illumination: ${item.illumination}</p>
+                            `
+                        }
+                      </div>
+                    `).join("")
+                  : "<p>N/A</p>"
+              }
+
               <h3>Forecast</h3>
               ${data.forecastData.map(item => `<p>${item}</p>`).join("")}
             `
@@ -175,6 +179,7 @@
   </script>
 </body>
 </html>
+
 
 
 
