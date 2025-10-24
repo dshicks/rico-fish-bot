@@ -112,7 +112,13 @@
           data.forecastData && data.forecastData.length
             ? `
               <h3>Current Weather</h3>
-              <p>${data.currentWeather || "N/A"}</p>
+              
+              ${
+                data.currentWeather
+                  ? data.currentWeather.split(", ").map(item => `<p>${item}</p>`).join("")
+                  : "<p>N/A</p>"
+              }
+
               
               <h3>Tide Info</h3>
               <p>${data.tideInfo || "N/A"}</p>
@@ -149,6 +155,7 @@
   </script>
 </body>
 </html>
+
 
 
 
