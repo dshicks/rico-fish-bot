@@ -131,8 +131,16 @@
                   : "<p>N/A</p>"
               }
 
-              <h3>Tide Info</h3>
-              <p>${data.tideInfo || "N/A"}</p>
+              
+                  <h3>Tide Info</h3>
+                  ${
+                    Array.isArray(data.tideInfo) && data.tideInfo.length && !data.tideInfo[0].error
+                      ? data.tideInfo.map(item => `
+                          <p><strong>${item.date}</strong> - ${item.type} Tide at ${item.time}, Height: ${item.height}</p>
+                        `).join("")
+                      : "<p>N/A</p>"
+                  }
+              
               
               <h3>Moon Info</h3>
               <p>${data.moonInfo || "N/A"}</p>
@@ -166,6 +174,7 @@
   </script>
 </body>
 </html>
+
 
 
 
