@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rico Fish Bot Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f8ff;
+    }
+    header {
+      text-align: center;
+      padding: 15px;
+      background: #0077b6;
+      color: #fff;
+    }
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+    .map-container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+    .leaflet-control-layers {
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📍 Tide Stations & Fishing Spots</h1>
+    <p>Explore Texas Coastal Fishing Locations</p>
+  </header>
+
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize map centered on Rockport, TX
+    const map = L.map('map').setView([28.0206, -97.0544], 10);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Custom icons
+    const tideIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/727/727790.png', // Tide icon
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
+    const fishingIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/616/616554.png', // Fishing icon
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
+    // Tide stations layer
+    const tideStationsLayer = L.layerGroup();
+    const tideStations = [
+      { name: "Rockport Tide Station", lat: 28.0206, lng: -97.0544 },
+      { name: "Aransas Pass Station", lat: 27.909, lng: -97.152 }
+    ];
+    tideStations.forEach(station => {
+      L.marker([station.lat, station.lng], { icon: tideIcon })
+        .bindPopup(`<strong>${station.name}</strong><br>Live tide data available.`)
+        .addTo(tideStationsLayer);
+    });
+
+    // Fishing spots layer
+    const fishingSpotsLayer = L.layerGroup();
+    const fishingSpots = [
+      { name: "Copano Bay Pier", lat: 28.115, lng: -97.048 },
+      { name: "Aransas Bay Flats", lat: 27.925, lng: -97.045 },
+      { name: "Redfish Bay Channel", lat: 27.909, lng: -97.152 }
+    ];
+    fishingSpots.forEach(spot => {
+      L.marker([spot.lat, spot.lng], { icon: fishingIcon })
+        .bindPopup(`<strong>${spot.name}</strong><br>Great for redfish and trout!`)
+        .addTo(fishingSpotsLayer);
+    });
+
+    // Add both layers to map by default
+    tideStationsLayer.addTo(map);
+    fishingSpotsLayer.addTo(map);
+
+    // Layer control
+    const baseMaps = {};
+    const overlayMaps = {
+      "Tide Stations": tideStationsLayer,
+      "Fishing Spots": fishingSpotsLayer
+    };
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+  </script>
+</body>
+</html>
