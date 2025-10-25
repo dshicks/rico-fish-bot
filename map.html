@@ -49,7 +49,7 @@ async function loadMapLocations() {
           const res = await fetch(`${BASE_URL}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: `Give fishing tips for ${loc.name} based on current weather, tide, and moon data.` })
+            body: JSON.stringify({ message: `Give fishing tips for ${loc.name}` }) // ✅ FIXED
           });
           const data = await res.json();
           const tips = escapeHtml(data.llmReply || 'No tips available.');
