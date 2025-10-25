@@ -18,15 +18,11 @@
 <script>
 const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
 
-// ✅ Initialize Leaflet map
-const map = L.map('map').setView([28.0, -97.0], 8); // Texas coast center
-
-// ✅ Add tile layer
+const map = L.map('map').setView([28.0, -97.0], 8);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// ✅ Escape HTML for safety
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -37,31 +33,38 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// ✅ Load locations dynamically from backend
 async function loadMapLocations() {
   try {
-    const res = await fetch(`${BASE_URL}/api/locations`); // Public route
+    const res = await fetch(`${BASE_URL}/api/locations`);
     const locations = await res.json();
 
-    if (!Array.isArray(locations) || locations.length === 0) {
-      console.warn('No locations found.');
-      return;
-    }
-
     locations.forEach(loc => {
-      if (!loc.lat || !loc.lng) return; // skip invalid coords
+      if (!loc.lat || !loc.lng) return;
+
       const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-      marker.bindPopup(`
-        <b>${escapeHtml(loc.name)}</b><br>
-        ${escapeHtml(loc.description || '')}
-      `);
+      marker.bindPopup(`<b>${escapeHtml(loc.name)}</b><br>Loading tips...`);
+
+      marker.on('click', async () => {
+        try {
+          const res = await fetch(`${BASE_URL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `Give fishing tips for ${loc.name}` })
+          });
+          const data = await res.json();
+          const tips = escapeHtml(data.llmReply || 'No tips available.');
+          marker.setPopupContent(`<b>${escapeHtml(loc.name)}</b><br>${tips}`);
+        } catch (err) {
+          console.error('Failed to fetch tips:', err);
+          marker.setPopupContent(`<b>${escapeHtml(loc.name)}</b><br>Error loading tips.`);
+        }
+      });
     });
   } catch (err) {
     console.error('Failed to load locations:', err);
   }
 }
 
-// ✅ Call loader
 loadMapLocations();
 </script>
 
