@@ -42,14 +42,16 @@ async function loadMapLocations() {
       if (!loc.lat || !loc.lng) return;
 
       const marker = L.marker([loc.lat, loc.lng]).addTo(map);
-      marker.bindPopup(`<b>${escapeHtml(loc.name)}</b><br>Loading tips...`);
+      marker.bindPopup(`<b>${escapeHtml(loc.name)}</b><br>Click for tips`);
 
       marker.on('click', async () => {
+        marker.setPopupContent(`<b>${escapeHtml(loc.name)}</b><br>Fetching tips...`);
+        marker.openPopup();
         try {
           const res = await fetch(`${BASE_URL}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: `Give fishing tips for ${loc.name}` }) // ✅ FIXED
+            body: JSON.stringify({ message: `Give fishing tips for ${loc.name}` })
           });
           const data = await res.json();
           const tips = escapeHtml(data.llmReply || 'No tips available.');
