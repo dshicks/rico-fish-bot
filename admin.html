@@ -58,7 +58,6 @@
   <!-- Prompts.json Viewer -->
   <section>
     <h2>Saved Prompts...</h2>
-
     <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
       <button id="reload-prompts-json-btn" class="btn">Refresh Prompts</button>
       <label style="display:flex; align-items:center; gap:6px; font-size: 0.95em;">
@@ -67,27 +66,17 @@
       </label>
       <span id="prompts-json-status" class="muted"></span>
     </div>
-
-    <!-- Table view -->
     <div id="prompts-json-table-wrapper" style="display:none; overflow:auto; max-height:300px; border:1px solid #eee; border-radius:6px;">
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Text</th>
-            <th>Created</th>
-            <th>ID</th>
-            <th>Has Embedding</th>
+            <th>#</th><th>Text</th><th>Created</th><th>ID</th><th>Has Embedding</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="prompts-json-table-body"></tbody>
       </table>
     </div>
-
-    <!-- Raw JSON pretty print -->
     <pre id="prompts-json-pre" style="margin-top:12px; background:#fff; border:1px solid #eee; border-radius:6px; padding:12px; overflow:auto; max-height:300px;"></pre>
-
-    <!-- (Optional) Clear -->
     <div style="margin-top:10px;">
       <button id="clear-prompts-btn" class="danger btn">Clear All Prompts</button>
       <small class="muted" style="margin-left:8px;">This wipes prompts.json</small>
@@ -97,7 +86,6 @@
   <!-- User Chat History -->
   <section>
     <h2>User Chat History</h2>
-    <!-- ✅ Added Clear Chat History Button -->
     <div style="margin-top:10px;">
       <button id="clear-chat-btn" class="danger btn">Clear Chat History</button>
       <small class="muted" style="margin-left:8px;">This wipes all user chat history</small>
@@ -107,13 +95,30 @@
       <tbody id="chat-history"></tbody>
     </table>
   </section>
+
+  <!-- ✅ NEW: Location Management -->
+  <section>
+    <h2>Manage Map Locations</h2>
+    <div style="margin-bottom:10px;">
+      <input type="text" id="loc-name" placeholder="Name">
+      <input type="text" id="loc-lat" placeholder="Latitude">
+      <input type="text" id="loc-lng" placeholder="Longitude">
+      <input type="text" id="loc-desc" placeholder="Description">
+      <button class="btn" onclick="addLocation()">Add Location</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Lat</th><th>Lng</th><th>Description</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="locations-table"></tbody>
+    </table>
+  </section>
 </div>
 
 <script>
 const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
 let token = '';
 
-// ✅ Restore session on page load
 window.onload = () => {
   const savedToken = localStorage.getItem('adminToken');
   if (savedToken) {
@@ -121,8 +126,9 @@ window.onload = () => {
     showAdminContent();
     loadPromptHistory();
     loadChatHistory();
-    loadPromptsJson(); // load viewer on restore
+    loadPromptsJson();
     loadSentiment();
+    loadLocations(); // ✅ Added
   }
 };
 
@@ -142,6 +148,8 @@ async function login() {
       loadPromptHistory();
       loadChatHistory();
       loadPromptsJson();
+      loadSentiment();
+      loadLocations(); // ✅ Added
     } else {
       alert('Invalid password');
     }
@@ -156,7 +164,6 @@ function showAdminContent() {
   document.getElementById('admin-content').style.display = 'block';
 }
 
-  
 async function loadSentiment() {
   try {
     const res = await fetch(`${BASE_URL}/api/admin/sentiment`, {
@@ -166,11 +173,8 @@ async function loadSentiment() {
     if (data.sentiment) {
       document.getElementById('sentiment-select').value = data.sentiment;
     }
-  } catch (e) {
-    console.error('Failed to load sentiment:', e);
-  }
+  } catch (e) { console.error('Failed to load sentiment:', e); }
 }
-
 
 function logout() {
   localStorage.removeItem('adminToken');
@@ -190,11 +194,8 @@ async function submitPrompt() {
     });
     document.getElementById('prompt-input').value = '';
     loadPromptHistory();
-    loadPromptsJson(); // refresh viewer after adding
-  } catch (e) {
-    console.error(e);
-    alert('Failed to submit prompt.');
-  }
+    loadPromptsJson();
+  } catch (e) { console.error(e); alert('Failed to submit prompt.'); }
 }
 
 async function updateSentiment() {
@@ -206,10 +207,7 @@ async function updateSentiment() {
       body: JSON.stringify({ sentiment })
     });
     alert('Sentiment updated!');
-  } catch (e) {
-    console.error(e);
-    alert('Failed to update sentiment.');
-  }
+  } catch (e) { console.error(e); alert('Failed to update sentiment.'); }
 }
 
 async function loadPromptHistory() {
@@ -242,40 +240,74 @@ async function loadChatHistory() {
   }
 }
 
-async function editPrompt(id, currentText) {
-  const newText = prompt("Edit prompt:", currentText);
-  if (!newText || newText === currentText) return;
+/* ===== Location Management ===== */
+async function loadLocations() {
   try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': token },
-      body: JSON.stringify({ text: newText })
-    });
-    if (!res.ok) throw new Error(await res.text());
-    await loadPromptsJson();
-    alert('Prompt updated.');
+    const res = await fetch(`${BASE_URL}/api/admin/locations`, { headers: { 'Authorization': token } });
+    const locations = await res.json();
+    const rows = locations.map(loc => `
+      <tr>
+        <td>${escapeHtml(loc.name)}</td>
+        <td>${loc.lat}</td>
+        <td>${loc.lng}</td>
+        <td>${escapeHtml(loc.description)}</td>
+        <td>
+          <button class="btn" onclick="editLocation('${loc.id}')">Edit</button>
+          <button class="danger btn" onclick="deleteLocation('${loc.id}')">Delete</button>
+        </td>
+      </tr>`).join('');
+    document.getElementById('locations-table').innerHTML = rows;
   } catch (e) {
     console.error(e);
-    alert('Failed to update prompt.');
+    document.getElementById('locations-table').innerHTML = '<tr><td colspan="5" class="muted">Failed to load locations.</td></tr>';
   }
 }
 
-async function deletePrompt(id) {
-  if (!confirm('Delete this prompt?')) return;
+async function addLocation() {
+  const name = document.getElementById('loc-name').value.trim();
+  const lat = document.getElementById('loc-lat').value.trim();
+  const lng = document.getElementById('loc-lng').value.trim();
+  const description = document.getElementById('loc-desc').value.trim();
+  if (!name || !lat || !lng) return alert('Name, Lat, and Lng are required.');
   try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts/${id}`, {
+    await fetch(`${BASE_URL}/api/admin/locations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ name, lat, lng, description })
+    });
+    loadLocations();
+    alert('Location added!');
+  } catch (e) { console.error(e); alert('Failed to add location.'); }
+}
+
+async function editLocation(id) {
+  const newName = prompt('New name:');
+  const newLat = prompt('New latitude:');
+  const newLng = prompt('New longitude:');
+  const newDesc = prompt('New description:');
+  if (!newName || !newLat || !newLng) return;
+  try {
+    await fetch(`${BASE_URL}/api/admin/locations/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': token },
+      body: JSON.stringify({ name: newName, lat: newLat, lng: newLng, description: newDesc })
+    });
+    loadLocations();
+    alert('Location updated.');
+  } catch (e) { console.error(e); alert('Failed to update location.'); }
+}
+
+async function deleteLocation(id) {
+  if (!confirm('Delete this location?')) return;
+  try {
+    await fetch(`${BASE_URL}/api/admin/locations/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': token }
     });
-    if (!res.ok) throw new Error(await res.text());
-    await loadPromptsJson();
-    alert('Prompt deleted.');
-  } catch (e) {
-    console.error(e);
-    alert('Failed to delete prompt.');
-  }
+    loadLocations();
+    alert('Location deleted.');
+  } catch (e) { console.error(e); alert('Failed to delete location.'); }
 }
-
 
 /* ===== Prompts.json Viewer ===== */
 const promptsJsonPre = document.getElementById('prompts-json-pre');
@@ -301,45 +333,29 @@ async function loadPromptsJson() {
   promptsJsonStatus.textContent = 'Loading...';
   promptsJsonPre.textContent = '';
   promptsJsonTableBody.innerHTML = '';
-
   try {
-    const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, {
-      headers: { 'Authorization': token }
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Server responded ${res.status}: ${txt}`);
-    }
-
+    const res = await fetch(`${BASE_URL}/api/admin/prompts?full=true`, { headers: { 'Authorization': token } });
+    if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-
-    // Pretty print raw JSON
     promptsJsonPre.textContent = JSON.stringify(data, null, 2);
-
-    // Render table if toggled and data is an array
     if (Array.isArray(data) && promptsJsonTableToggle.checked) {
       data.forEach((item, idx) => {
         const tr = document.createElement('tr');
         const hasEmbedding = item && item.embedding && Array.isArray(item.embedding) && item.embedding.length > 0;
         tr.innerHTML = `
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${idx + 1}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px; white-space:pre-wrap;">${escapeHtml(item.text || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.createdAt || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${escapeHtml(item.id || '')}</td>
-          <td style="border-bottom:1px solid #f0f0f0; padding:8px;">${hasEmbedding ? 'Yes' : 'No'}</td>     
-           <td>
-             <button class="btn" onclick="editPrompt('${item.id}', '${escapeHtml(item.text)}')">Edit</button>
-             <button class="danger btn" onclick="deletePrompt('${item.id}')">Delete</button>
-           </td>
-
-        `;
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(item.text || '')}</td>
+          <td>${escapeHtml(item.createdAt || '')}</td>
+          <td>${escapeHtml(item.id || '')}</td>
+          <td>${hasEmbedding ? 'Yes' : 'No'}</td>
+          <td>
+            <button class="btn" onclick="editPrompt('${item.id}', '${escapeHtml(item.text)}')">Edit</button>
+            <button class="danger btn" onclick="deletePrompt('${item.id}')">Delete</button>
+          </td>`;
         promptsJsonTableBody.appendChild(tr);
       });
     }
-
-    const count = Array.isArray(data) ? data.length : (data ? 1 : 0);
-    promptsJsonStatus.textContent = `Loaded ${count} record(s)`;
+    promptsJsonStatus.textContent = `Loaded ${Array.isArray(data) ? data.length : 0} record(s)`;
   } catch (err) {
     console.error('Failed to load prompts.json:', err);
     promptsJsonStatus.textContent = 'Error loading prompts';
@@ -347,64 +363,32 @@ async function loadPromptsJson() {
   }
 }
 
-// UI wiring
-if (promptsJsonReloadBtn) {
-  promptsJsonReloadBtn.addEventListener('click', () => {
-    loadPromptsJson();
-  });
-}
-if (promptsJsonTableToggle) {
-  promptsJsonTableToggle.addEventListener('change', () => {
-    promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
-    loadPromptsJson();
-  });
-}
-if (clearPromptsBtn) {
-  clearPromptsBtn.addEventListener('click', async () => {
-    if (!confirm('This will wipe all saved prompts. Continue?')) return;
-    try {
-      const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, {
-        method: 'POST',
-        headers: { 'Authorization': token }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Server responded ${res.status}: ${txt}`);
-      }
-      await loadPromptsJson();
-      await loadPromptHistory();
-      alert('Prompts cleared.');
-    } catch (e) {
-      console.error(e);
-      alert('Failed to clear prompts.');
-    }
-  });
-}
-
-/* ✅ Clear Chat History Button Wiring */
+if (promptsJsonReloadBtn) promptsJsonReloadBtn.addEventListener('click', () => loadPromptsJson());
+if (promptsJsonTableToggle) promptsJsonTableToggle.addEventListener('change', () => {
+  promptsJsonTableWrapper.style.display = promptsJsonTableToggle.checked ? 'block' : 'none';
+  loadPromptsJson();
+});
+if (clearPromptsBtn) clearPromptsBtn.addEventListener('click', async () => {
+  if (!confirm('This will wipe all saved prompts. Continue?')) return;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/prompts/clear`, { method: 'POST', headers: { 'Authorization': token } });
+    if (!res.ok) throw new Error(await res.text());
+    await loadPromptsJson();
+    await loadPromptHistory();
+    alert('Prompts cleared.');
+  } catch (e) { console.error(e); alert('Failed to clear prompts.'); }
+});
 
 const clearChatBtn = document.getElementById('clear-chat-btn');
-if (clearChatBtn) {
-  clearChatBtn.addEventListener('click', async () => {
-    if (!confirm('This will delete all user chat history. Continue?')) return;
-    try {
-      const res = await fetch(`${BASE_URL}/api/admin/history/clear`, {
-        method: 'POST',
-        headers: { 'Authorization': token }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Server responded ${res.status}: ${txt}`);
-      }
-      await loadChatHistory();
-      alert('Chat history cleared.');
-    } catch (e) {
-      console.error(e);
-      alert('Failed to clear chat history.');
-    }
-  });
-}
-
+if (clearChatBtn) clearChatBtn.addEventListener('click', async () => {
+  if (!confirm('This will delete all user chat history. Continue?')) return;
+  try {
+    const res = await fetch(`${BASE_URL}/api/admin/history/clear`, { method: 'POST', headers: { 'Authorization': token } });
+    if (!res.ok) throw new Error(await res.text());
+    await loadChatHistory();
+    alert('Chat history cleared.');
+  } catch (e) { console.error(e); alert('Failed to clear chat history.'); }
+});
 </script>
 </body>
 </html>
