@@ -9,6 +9,7 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
+      padding: 0;
       background: #f0f8ff;
     }
     header {
@@ -26,6 +27,9 @@
       margin: auto;
       padding: 20px;
     }
+    .leaflet-control-layers {
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -40,8 +44,6 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const BASE_URL = "https://rico-fish-bot-backend.onrender.com";
-
     // Initialize map centered on Rockport, TX
     const map = L.map('map').setView([28.0206, -97.0544], 10);
 
@@ -50,53 +52,81 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Custom fishing icon
-    const fishingIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/427/427270.png',
+    // Custom icons
+    const tideIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/727/727790.png', // Tide icon
       iconSize: [32, 32],
       iconAnchor: [16, 32],
       popupAnchor: [0, -32]
     });
 
-    // Load locations dynamically from backend
-    async function loadLocations() {
+    const fishingIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/427/427270.png', // Fishing icon
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
+    // Tide stations layer
+    const tideStationsLayer = L.layerGroup();
+    const tideStations = [
+      { name: "Rockport Tide Station", lat: 28.0206, lng: -97.0544 },
+      { name: "Aransas Pass Station", lat: 27.909, lng: -97.152 }
+    ];
+    tideStations.forEach(station => {
+      L.marker([station.lat, station.lng], { icon: tideIcon })
+        .bindPopup(`<strong>${station.name}</strong><br>Live tide data available.`)
+        .addTo(tideStationsLayer);
+    });
+
+    // Fishing spots layer with LLM tips
+    const fishingSpotsLayer = L.layerGroup();
+    const fishingSpots = [
+      { name: "Copano Bay Pier", lat: 28.115, lng: -97.048 },
+      { name: "Aransas Bay Flats", lat: 27.925, lng: -97.045 },
+      { name: "Redfish Bay Channel", lat: 27.909, lng: -97.152 }
+    ];
+
+    fishingSpots.forEach(async spot => {
+      // Create marker with initial loading popup
+      const marker = L.marker([spot.lat, spot.lng], { icon: fishingIcon })
+        .addTo(fishingSpotsLayer)
+        .bindPopup(`<strong>${spot.name}</strong><br>Loading tips...`);
+
       try {
-        const res = await fetch(`${BASE_URL}/api/locations`);
-        const locations = await res.json();
-
-        locations.forEach(loc => {
-          const marker = L.marker([loc.lat, loc.lng], { icon: fishingIcon })
-            .addTo(map)
-            .bindPopup(`<strong>${loc.name}</strong><br>${loc.description || ''}<br>Click for tips`);
-
-          // Fetch LLM tips on click
-          marker.on('click', async () => {
-            marker.setPopupContent(`<strong>${loc.name}</strong><br>Fetching tips...`);
-            marker.openPopup();
-            try {
-              const response = await fetch(`${BASE_URL}/api/chat`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: `Give fishing tips for ${loc.name}` })
-              });
-              const data = await response.json();
-              const tips = data.llmReply || "Tips unavailable.";
-              marker.setPopupContent(`
-                <strong>${loc.name}</strong><br>
-                ${loc.description || ''}<br>
-                <em>Fishing Tips:</em><br>${tips}
-              `);
-            } catch (err) {
-              marker.setPopupContent(`<strong>${loc.name}</strong><br>Error loading tips.`);
-            }
-          });
+        // Fetch LLM-generated tips from backend
+        const response = await fetch("https://rico-fish-bot-backend.onrender.com/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: `Give fishing tips for ${spot.name} based on current weather, tide, and moon data.` })
         });
-      } catch (err) {
-        console.error("Failed to load locations:", err);
-      }
-    }
 
-    loadLocations();
+        const data = await response.json();
+        const tips = data.llmReply || "Tips unavailable.";
+
+        // Update popup with tips
+        marker.bindPopup(`
+          <strong>${spot.name}</strong><br>
+          Great for redfish and trout!<br><br>
+          <em>Fishing Tips:</em><br>${tips}
+        `);
+      } catch (error) {
+        console.error("Error fetching tips:", error);
+        marker.bindPopup(`<strong>${spot.name}</strong><br>Tips unavailable.`);
+      }
+    });
+
+    // Add both layers to map by default
+    //tideStationsLayer.addTo(map);
+    fishingSpotsLayer.addTo(map);
+
+    // Layer control
+    const baseMaps = {};
+    const overlayMaps = {
+      "Tide Stations": tideStationsLayer,
+      "Fishing Spots": fishingSpotsLayer
+    };
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
   </script>
 </body>
 </html>
